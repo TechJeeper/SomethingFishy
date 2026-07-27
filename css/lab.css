@@ -344,29 +344,120 @@
   }
 }
 
-.lab-wires {
-  position: absolute;
-  inset: 0;
+.lab-pin.is-hot-pair {
+  border-color: var(--foam);
+  background: rgba(168, 230, 223, 0.12);
+}
+
+.lab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  padding: 0.1rem 0.4rem;
+  margin-left: 0.35rem;
+  border-radius: 999px;
+  background: rgba(61, 190, 176, 0.2);
+  color: var(--foam);
+  font-size: 0.75rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.lab-conn-list {
+  list-style: none;
+  margin: 0 0 var(--space-md);
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.lab-conn-empty {
+  padding: 0.65rem 0.75rem;
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+}
+
+.lab-conn {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem;
+  align-items: stretch;
+  border-bottom: 1px solid var(--line);
+}
+
+.lab-conn:last-child {
+  border-bottom: none;
+}
+
+.lab-conn-btn {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
   width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 2;
-  overflow: visible;
+  padding: 0.45rem 0.55rem;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-body);
 }
 
-.lab-wires path.is-live {
-  stroke: #a8e6df !important;
-  stroke-width: 3;
-  filter: drop-shadow(0 0 5px rgba(168, 230, 223, 0.6));
+.lab-conn-btn:hover {
+  background: rgba(61, 190, 176, 0.1);
 }
 
-.lab-root .lab-toolbar,
-.lab-root .lab-hint {
-  position: relative;
-  z-index: 3;
+.lab-conn-swatch {
+  width: 8px;
+  height: 8px;
+  margin-top: 0.35rem;
+  border-radius: 2px;
+  flex-shrink: 0;
 }
 
-.lab-root .lab-grid {
-  position: relative;
-  z-index: 1;
+.lab-conn-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.35rem;
+  font-size: 0.78rem;
+  font-family: ui-monospace, monospace;
+}
+
+.lab-conn-text strong {
+  font-weight: 600;
+  color: var(--foam);
+}
+
+.lab-conn-arrow {
+  color: var(--ink-muted);
+}
+
+.lab-conn-text em {
+  flex-basis: 100%;
+  font-style: normal;
+  color: var(--ink-muted);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+}
+
+.lab-conn-del {
+  border: none;
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+  padding: 0 0.55rem;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.lab-conn-del:hover {
+  color: var(--coral-hot);
+}
+
+.lab-wires {
+  display: none;
 }

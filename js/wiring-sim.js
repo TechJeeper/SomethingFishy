@@ -1,20 +1,18 @@
 /**
- * Wiring Lab simulator — build connections, validate against netlist, run signal-flow sim.
+ * Wiring Lab — pin click wiring, validation, signal-flow sim.
+ * Uses a connection list (not cross-card Bezier spaghetti) plus pin highlighting.
  */
-import {
-  MODULES,
-  referenceWires,
-  validateWiring,
-} from "./netlist.js";
+import { MODULES, referenceWires, validateWiring } from "./netlist.js";
 
 /**
  * @param {HTMLElement} root
  */
 export function mountWiringLab(root) {
-  /** @type {{a:string,b:string,id:string}[]} */
+  /** @type {{a:string,b:string,id:string,name?:string,color?:string,group?:string}[]} */
   let wires = [];
   let selected = null;
   let simRunning = false;
+  let hoverWireId = null;
 
   root.innerHTML = `
     <div class="lab-toolbar">
@@ -24,10 +22,12 @@ export function mountWiringLab(root) {
       <button type="button" class="btn btn-primary" data-act="simulate" disabled>Simulate talk turn</button>
       <span class="status-pill" data-status>No wires yet</span>
     </div>
-    <p class="lab-hint">Click a pin, then another pin, to add a wire. Or load the reference design and validate.</p>
+    <p class="lab-hint">Click a pin, then another pin, to add a wire. Connections appear in the list — hover a row to highlight both pins.</p>
     <div class="lab-grid">
       <div class="lab-board" data-board></div>
       <aside class="lab-side">
+        <h3>Connections <span data-wire-count class="lab-count">0</span></h3>
+        <ul class="lab-conn-list" data-conn-list></ul>
         <h3>Validation</h3>
         <div class="lab-results" data-results><p class="field-hint">Run validate to check electrical rules against the firmware pin map.</p></div>
         <h3>Signal flow</h3>
@@ -46,7 +46,6 @@ export function mountWiringLab(root) {
         </div>
       </aside>
     </div>
-    <svg class="lab-wires" data-wires-svg></svg>
   `;
 
   const board = root.querySelector("[data-board]");
@@ -54,10 +53,10 @@ export function mountWiringLab(root) {
   const statusEl = root.querySelector("[data-status]");
   const flowEl = root.querySelector("[data-flow]");
   const fishEl = root.querySelector("[data-fish]");
-  const svg = root.querySelector("[data-wires-svg]");
+  const connList = root.querySelector("[data-conn-list]");
+  const wireCount = root.querySelector("[data-wire-count]");
   const btnSim = root.querySelector('[data-act="simulate"]');
 
-  // Render modules
   for (const mod of MODULES) {
     const card = document.createElement("article");
     card.className = "lab-module";
@@ -80,39 +79,57 @@ export function mountWiringLab(root) {
     if (state) statusEl.classList.add(state);
   }
 
-  function pinCenter(ep) {
-    const btn = root.querySelector(`.lab-pin[data-ep="${ep}"]`);
-    if (!btn) return null;
-    const r = btn.getBoundingClientRect();
-    const host = root.getBoundingClientRect();
-    return { x: r.left + r.width / 2 - host.left, y: r.top + r.height / 2 - host.top };
+  function shortEp(ep) {
+    return ep.replace(/^[^.]+\./, "");
   }
 
-  function redrawWires() {
-    const host = root.getBoundingClientRect();
-    svg.setAttribute("width", String(host.width));
-    svg.setAttribute("height", String(host.height));
-    svg.innerHTML = "";
-    for (const w of wires) {
-      const pa = pinCenter(w.a);
-      const pb = pinCenter(w.b);
-      if (!pa || !pb) continue;
-      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      const mx = (pa.x + pb.x) / 2;
-      path.setAttribute("d", `M${pa.x} ${pa.y} C${mx} ${pa.y}, ${mx} ${pb.y}, ${pb.x} ${pb.y}`);
-      path.setAttribute("fill", "none");
-      path.setAttribute("stroke", w.color || "#3dbeb0");
-      path.setAttribute("stroke-width", "2");
-      path.setAttribute("stroke-opacity", "0.9");
-      path.dataset.wire = w.id;
-      svg.appendChild(path);
-    }
-    // selection highlight
+  function moduleOf(ep) {
+    return ep.split(".")[0];
+  }
+
+  function refreshPins() {
     root.querySelectorAll(".lab-pin").forEach((el) => {
-      el.classList.toggle("is-selected", el.dataset.ep === selected);
-      const used = wires.some((w) => w.a === el.dataset.ep || w.b === el.dataset.ep);
+      const ep = el.dataset.ep;
+      const used = wires.some((w) => w.a === ep || w.b === ep);
+      const hot =
+        ep === selected ||
+        (hoverWireId &&
+          wires.some((w) => w.id === hoverWireId && (w.a === ep || w.b === ep)));
+      el.classList.toggle("is-selected", ep === selected);
       el.classList.toggle("is-wired", used);
+      el.classList.toggle("is-hot-pair", Boolean(hot && ep !== selected));
     });
+  }
+
+  function renderConnList() {
+    wireCount.textContent = String(wires.length);
+    connList.innerHTML = "";
+    if (!wires.length) {
+      connList.innerHTML = `<li class="lab-conn-empty">No wires yet</li>`;
+      return;
+    }
+    for (const w of wires) {
+      const li = document.createElement("li");
+      li.className = "lab-conn";
+      li.dataset.wire = w.id;
+      li.innerHTML = `
+        <button type="button" class="lab-conn-btn" data-wire="${w.id}">
+          <span class="lab-conn-swatch" style="background:${w.color || "#3dbeb0"}"></span>
+          <span class="lab-conn-text">
+            <strong>${moduleOf(w.a)}.${shortEp(w.a)}</strong>
+            <span class="lab-conn-arrow">↔</span>
+            <strong>${moduleOf(w.b)}.${shortEp(w.b)}</strong>
+            ${w.name ? `<em>${w.name}</em>` : ""}
+          </span>
+        </button>
+        <button type="button" class="lab-conn-del" data-del="${w.id}" title="Remove">×</button>`;
+      connList.appendChild(li);
+    }
+  }
+
+  function redraw() {
+    renderConnList();
+    refreshPins();
   }
 
   function addWire(a, b) {
@@ -122,7 +139,7 @@ export function mountWiringLab(root) {
     wires.push({ a, b, id, color: "#3dbeb0" });
     setStatus(`${wires.length} wire(s)`, "connected");
     btnSim.disabled = true;
-    redrawWires();
+    redraw();
   }
 
   board.addEventListener("click", (e) => {
@@ -131,12 +148,37 @@ export function mountWiringLab(root) {
     const ep = btn.dataset.ep;
     if (!selected) {
       selected = ep;
-      redrawWires();
+      refreshPins();
       return;
     }
     addWire(selected, ep);
     selected = null;
-    redrawWires();
+    refreshPins();
+  });
+
+  connList.addEventListener("mouseover", (e) => {
+    const row = e.target.closest("[data-wire]");
+    hoverWireId = row?.dataset.wire || null;
+    refreshPins();
+  });
+  connList.addEventListener("mouseleave", () => {
+    hoverWireId = null;
+    refreshPins();
+  });
+  connList.addEventListener("click", (e) => {
+    const del = e.target.closest("[data-del]");
+    if (del) {
+      wires = wires.filter((w) => w.id !== del.dataset.del);
+      btnSim.disabled = true;
+      setStatus(wires.length ? `${wires.length} wire(s)` : "No wires yet", wires.length ? "connected" : undefined);
+      redraw();
+      return;
+    }
+    const row = e.target.closest("[data-wire]");
+    if (row) {
+      hoverWireId = row.dataset.wire;
+      refreshPins();
+    }
   });
 
   root.querySelector('[data-act="load"]').addEventListener("click", () => {
@@ -146,23 +188,26 @@ export function mountWiringLab(root) {
       id: [w.a, w.b].sort().join("|"),
       color: w.color,
       name: w.name,
+      group: w.group,
     }));
     selected = null;
+    hoverWireId = null;
     setStatus(`Reference design loaded (${wires.length} wires)`, "connected");
     btnSim.disabled = true;
-    resultsEl.innerHTML = `<p class="field-hint">Reference design loaded. Click <strong>Validate wiring</strong> to confirm it matches firmware pins.</p>`;
-    redrawWires();
+    resultsEl.innerHTML = `<p class="field-hint">Reference design loaded. Click <strong>Validate wiring</strong>.</p>`;
+    redraw();
   });
 
   root.querySelector('[data-act="clear"]').addEventListener("click", () => {
     wires = [];
     selected = null;
+    hoverWireId = null;
     btnSim.disabled = true;
     setStatus("No wires yet");
     resultsEl.innerHTML = `<p class="field-hint">Cleared. Load reference or click pins to wire.</p>`;
     setFlow(null);
     fishEl.classList.remove("is-talking");
-    redrawWires();
+    redraw();
   });
 
   root.querySelector('[data-act="validate"]').addEventListener("click", () => {
@@ -180,7 +225,7 @@ export function mountWiringLab(root) {
     for (const r of report.results) {
       const li = document.createElement("li");
       li.className = r.ok ? "ok" : r.severity === "danger" ? "danger" : "bad";
-      li.textContent = `${r.ok ? "✓" : "✗"} ${r.label}`;
+      li.textContent = `${r.ok ? "OK" : "X"} ${r.label}`;
       ul.appendChild(li);
     }
     resultsEl.appendChild(ul);
@@ -191,15 +236,20 @@ export function mountWiringLab(root) {
   function setFlow(step) {
     flowEl.querySelectorAll("[data-step]").forEach((li) => {
       li.classList.toggle("is-active", li.dataset.step === step);
-      li.classList.toggle("is-done", false);
+      li.classList.remove("is-done");
     });
     if (!step) return;
     const order = ["idle", "btn", "mic", "cloud", "amp", "motor"];
     const idx = order.indexOf(step);
     order.forEach((s, i) => {
       const li = flowEl.querySelector(`[data-step="${s}"]`);
-      if (!li) return;
-      if (i < idx) li.classList.add("is-done");
+      if (li && i < idx) li.classList.add("is-done");
+    });
+  }
+
+  function pulse(eps, on) {
+    eps.forEach((ep) => {
+      root.querySelector(`.lab-pin[data-ep="${ep}"]`)?.classList.toggle("is-live", on);
     });
   }
 
@@ -212,19 +262,6 @@ export function mountWiringLab(root) {
     simRunning = true;
     btnSim.disabled = true;
     setStatus("Simulating talk turn…", "connected");
-
-    const pulse = (eps, on) => {
-      eps.forEach((ep) => {
-        root.querySelector(`.lab-pin[data-ep="${ep}"]`)?.classList.toggle("is-live", on);
-      });
-      // highlight matching wires
-      svg.querySelectorAll("path").forEach((p) => {
-        const w = wires.find((x) => x.id === p.dataset.wire);
-        if (!w) return;
-        const hit = eps.includes(w.a) || eps.includes(w.b);
-        p.classList.toggle("is-live", on && hit);
-      });
-    };
 
     setFlow("btn");
     pulse(["esp32.GPIO14", "btn.SIG"], true);
@@ -271,7 +308,6 @@ export function mountWiringLab(root) {
       ],
       false
     );
-    // tail twitch
     pulse(["esp32.GPIO4", "esp32.GPIO5", "l298n.IN3", "l298n.IN4", "tail.A", "tail.B"], true);
     await sleep(500);
     pulse(["esp32.GPIO4", "esp32.GPIO5", "l298n.IN3", "l298n.IN4", "tail.A", "tail.B"], false);
@@ -283,9 +319,7 @@ export function mountWiringLab(root) {
     btnSim.disabled = false;
   });
 
-  window.addEventListener("resize", () => redrawWires());
-  // initial
-  requestAnimationFrame(() => redrawWires());
+  redraw();
 
   return {
     loadReference() {
