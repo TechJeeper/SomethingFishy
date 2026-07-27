@@ -38,5 +38,5 @@
   <path d="M505 180 H560 V160 H580" stroke="#e76f51" stroke-width="2" fill="none"/>
   <path d="M505 220 H580" stroke="#f08468" stroke-width="2"/>
   <path d="M505 250 H560 V280 H580" stroke="#f08468" stroke-width="2" fill="none"/>
-  <text x="390" y="40" text-anchor="middle" fill="#9bb0c4" font-family="Figtree,sans-serif" font-size="12">ENA &amp; ENB jumpers ON · share GND with ESP32</text>
+  <text x="390" y="40" text-anchor="middle" fill="#9bb0c4" font-family="Figtree,sans-serif" font-size="12">ENA &amp; ENB jumpers ON Â· share GND with ESP32</text>
 </svg>

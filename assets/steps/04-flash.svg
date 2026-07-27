@@ -14,5 +14,5 @@
   <path d="M120 200 V230 H200" stroke="#2a9d8f" stroke-width="3" fill="none"/>
   <rect x="200" y="215" width="80" height="30" rx="4" fill="#0c2138" stroke="#e8dcc8"/>
   <text x="240" y="235" text-anchor="middle" fill="#eef4f8" font-family="Figtree,sans-serif" font-size="11">USB host</text>
-  <text x="200" y="40" text-anchor="middle" fill="#a8e6df" font-family="Figtree,sans-serif" font-size="13" font-weight="600">Wire · power · flash</text>
+  <text x="200" y="40" text-anchor="middle" fill="#a8e6df" font-family="Figtree,sans-serif" font-size="13" font-weight="600">Wire Â· power Â· flash</text>
 </svg>

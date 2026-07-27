@@ -35,11 +35,9 @@
       <section class="reveal">
         <h2>System overview</h2>
         <div class="diagram-panel">
-          <object type="image/svg+xml" data="assets/diagrams/system-overview.svg" aria-label="System overview diagram">
-            <img src="assets/diagrams/system-overview.svg" alt="System overview: mic, ESP32, amp, motors" />
-          </object>
+          <img src="assets/diagrams/system-overview.svg" alt="System overview: mic, ESP32, amp, motors" width="800" height="420" />
           <div class="diagram-legend">
-            <span><i class="legend-swatch" style="background:#3dbeb0"></i> Digital / I²S</span>
+            <span><i class="legend-swatch" style="background:#3dbeb0"></i> Digital / I2S</span>
             <span><i class="legend-swatch" style="background:#e76f51"></i> Motor drive</span>
             <span><i class="legend-swatch" style="background:#e8dcc8"></i> Power</span>
           </div>
@@ -50,7 +48,7 @@
         <h2>INMP441 microphone</h2>
         <p>I²S RX on a dedicated bus. Tie <strong class="text-ink">L/R to GND</strong> so the mic always sits on the left channel.</p>
         <div class="diagram-panel">
-          <object type="image/svg+xml" data="assets/diagrams/mic-wiring.svg" aria-label="INMP441 wiring diagram"></object>
+          <img src="assets/diagrams/mic-wiring.svg" alt="INMP441 to ESP32-S3 wiring diagram" width="720" height="320" />
         </div>
         <div class="table-wrap">
           <table>
@@ -73,7 +71,7 @@
         <h2>MAX98357A amplifier</h2>
         <p>Second I²S bus for audio out to the stock Billy speaker. Keep speaker wires twisted and short.</p>
         <div class="diagram-panel">
-          <object type="image/svg+xml" data="assets/diagrams/amp-wiring.svg" aria-label="MAX98357A wiring diagram"></object>
+          <img src="assets/diagrams/amp-wiring.svg" alt="MAX98357A to ESP32-S3 wiring diagram" width="720" height="340" />
         </div>
         <div class="table-wrap">
           <table>
@@ -101,7 +99,7 @@
           swap its two output leads — do not invert in firmware first.
         </p>
         <div class="diagram-panel">
-          <object type="image/svg+xml" data="assets/diagrams/motor-wiring.svg" aria-label="L298N motor wiring diagram"></object>
+          <img src="assets/diagrams/motor-wiring.svg" alt="L298N motor driver wiring diagram" width="780" height="400" />
         </div>
         <div class="table-wrap">
           <table>

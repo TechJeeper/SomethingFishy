@@ -2,7 +2,7 @@
   <title>Step: Keep motors and speaker</title>
   <rect width="400" height="280" fill="transparent"/>
   <rect x="40" y="50" width="320" height="200" rx="8" fill="#143552" stroke="#3dbeb0" stroke-width="1.5"/>
-  <text x="200" y="80" text-anchor="middle" fill="#a8e6df" font-family="Figtree,sans-serif" font-size="13" font-weight="600">Inside the shell  keep these</text>
+  <text x="200" y="80" text-anchor="middle" fill="#a8e6df" font-family="Figtree,sans-serif" font-size="13" font-weight="600">Inside the shell - keep these</text>
   <!-- Speaker -->
   <circle cx="100" cy="160" r="35" fill="#06101c" stroke="#e8dcc8" stroke-width="2"/>
   <circle cx="100" cy="160" r="18" fill="#143552" stroke="#9bb0c4"/>
