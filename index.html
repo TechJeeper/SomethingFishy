@@ -98,8 +98,8 @@
           <div class="feature">
             <h3>Hardware walkthrough</h3>
             <p>
-              Disassembly photos-as-diagrams, pin maps, and motor reuse so you keep the mouth,
-              head, and tail that made Billy iconic.
+              Bypass the stock MCU without desoldering motors — cut at the PCB, join with lever nuts,
+              keep the mouth, head, and tail that made Billy iconic.
             </p>
           </div>
           <div class="feature">
@@ -123,9 +123,9 @@
         <span class="section-label">What you’ll build</span>
         <h2>A wall-mounted AI with gills</h2>
         <p class="lead">
-          SomethingFishy replaces the original Billy Bass sound board with an ESP32-S3, an I²S
-          microphone, an I²S amplifier, and an L298N motor driver. Say the wake phrase, ask a
-          question, and watch the mouth and tail animate with the reply.
+          SomethingFishy <strong class="text-ink">bypasses</strong> Billy’s original microcontroller —
+          snip the motor and speaker leads at the old board, leave the fish mechanisms alone, and drive
+          them from an ESP32-S3 with an I2S mic, amp, and L298N. Almost no soldering.
         </p>
         <div class="btn-group">
           <a class="btn btn-secondary" href="bom.html">Bill of materials</a>
@@ -141,10 +141,10 @@
             <strong class="text-ink">Parts &amp; prep</strong> — Order the BOM, gather tools, print the optional backplate.
           </li>
           <li style="color: var(--ink-muted); padding: 0.5rem 0">
-            <strong class="text-ink">Gut the fish</strong> — Keep speaker + motors; remove the vintage PCB.
+            <strong class="text-ink">Bypass the stock board</strong> — Snip motor + speaker wires at the PCB; leave mechanisms mounted.
           </li>
           <li style="color: var(--ink-muted); padding: 0.5rem 0">
-            <strong class="text-ink">Wire the brain</strong> — ESP32-S3 to mic, amp, and L298N per the pin map.
+            <strong class="text-ink">Wire the brain</strong> — Dupont jumpers + lever nuts / screw terminals to ESP32, mic, amp, L298N.
           </li>
           <li style="color: var(--ink-muted); padding: 0.5rem 0">
             <strong class="text-ink">Flash &amp; talk</strong> — Configure OpenAI + Wi‑Fi on the flash page, then say hello.

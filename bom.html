@@ -69,12 +69,12 @@
 
         <article class="bom-item">
           <div>
-            <h3>MAX98357A I²S Amplifier</h3>
-            <p class="bom-meta">Class-D amp that accepts I²S and drives the stock Billy speaker (≈4–8 Ω). Gain pin typically left floating for 9 dB.</p>
+            <h3>MAX98357A I2S Amplifier (screw terminals preferred)</h3>
+            <p class="bom-meta">Class-D amp for the stock Billy speaker. Buy a breakout with screw terminals on the speaker side so you can clamp the snipped SPK wires without soldering.</p>
           </div>
           <div class="bom-actions">
-            <span class="bom-price">~$5–8</span>
-            <a class="amazon-link" href="https://www.amazon.com/s?k=MAX98357A+I2S+amplifier" target="_blank" rel="noopener noreferrer">Amazon ↗</a>
+            <span class="bom-price">~$5–10</span>
+            <a class="amazon-link" href="https://www.amazon.com/s?k=MAX98357A+I2S+amplifier+screw+terminal" target="_blank" rel="noopener noreferrer">Amazon ↗</a>
           </div>
         </article>
 
@@ -102,12 +102,23 @@
 
         <article class="bom-item">
           <div>
-            <h3>Dupont jumper wires + breadboard (or protoboard)</h3>
-            <p class="bom-meta">Fine for prototyping. For a permanent install, solder to a protoboard or use the optional 3D-printed backplate mounts.</p>
+            <h3>Dupont jumper wires</h3>
+            <p class="bom-meta">Male-female jumpers for ESP32 header pins to mic, amp, and L298N logic inputs. No breadboard required once you know the pin map.</p>
           </div>
           <div class="bom-actions">
-            <span class="bom-price">~$8–12</span>
-            <a class="amazon-link" href="https://www.amazon.com/s?k=Dupont+jumper+wire+kit+breadboard" target="_blank" rel="noopener noreferrer">Amazon ↗</a>
+            <span class="bom-price">~$6–10</span>
+            <a class="amazon-link" href="https://www.amazon.com/s?k=Dupont+jumper+wire+kit+male+female" target="_blank" rel="noopener noreferrer">Amazon ↗</a>
+          </div>
+        </article>
+
+        <article class="bom-item">
+          <div>
+            <h3>Lever nuts (Wago-style) or mini screw terminals</h3>
+            <p class="bom-meta">The no-solder joiners for Billy’s motor and speaker leads. 2-port and 3-port lever nuts let you splice stripped wires to pigtails that land on the L298N / amp.</p>
+          </div>
+          <div class="bom-actions">
+            <span class="bom-price">~$8–15</span>
+            <a class="amazon-link" href="https://www.amazon.com/s?k=Wago+221+lever+nut+assortment" target="_blank" rel="noopener noreferrer">Amazon ↗</a>
           </div>
         </article>
 
@@ -153,8 +164,9 @@
       <div class="callout reveal">
         <h4>Tools you’ll want</h4>
         <p>
-          Phillips screwdriver, small flat pry tool, wire strippers, soldering iron (for speaker leads and permanent joints),
-          multimeter, and zip ties or hot glue for strain relief. Safety glasses when prying the shell — the plastic clips can snap.
+          Phillips screwdriver, flush cutters, wire strippers, multimeter, zip ties or hot glue for
+          strain relief. A soldering iron is optional on the bypass path — keep one handy only if a
+          wire is too short or a module lacks terminals. Safety glasses when prying the shell.
         </p>
       </div>
 

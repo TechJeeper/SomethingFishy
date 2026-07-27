@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 380" role="img" aria-labelledby="bypass-title">
+  <title id="bypass-title">Bypass stock MCU - cut wires at PCB, keep motors and speaker</title>
+  <rect width="800" height="380" fill="#0c2138" rx="4"/>
+
+  <!-- Stock PCB (left, greyed / bypassed) -->
+  <rect x="40" y="80" width="160" height="200" rx="8" fill="#06101c" stroke="#666" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="120" y="115" text-anchor="middle" fill="#888" font-family="Figtree,sans-serif" font-size="14" font-weight="700">Stock PCB</text>
+  <text x="120" y="138" text-anchor="middle" fill="#666" font-family="Figtree,sans-serif" font-size="11">leave in place</text>
+  <text x="120" y="158" text-anchor="middle" fill="#666" font-family="Figtree,sans-serif" font-size="11">(unpowered)</text>
+  <path d="M70 180 L170 240 M170 180 L70 240" stroke="#e76f51" stroke-width="2.5"/>
+  <text x="120" y="265" text-anchor="middle" fill="#e76f51" font-family="Figtree,sans-serif" font-size="12" font-weight="600">bypassed</text>
+
+  <!-- Cut marks -->
+  <g stroke="#e76f51" stroke-width="2">
+    <line x1="220" y1="120" x2="250" y2="120"/>
+    <line x1="235" y1="110" x2="235" y2="130"/>
+    <line x1="220" y1="170" x2="250" y2="170"/>
+    <line x1="235" y1="160" x2="235" y2="180"/>
+    <line x1="220" y1="220" x2="250" y2="220"/>
+    <line x1="235" y1="210" x2="235" y2="230"/>
+  </g>
+  <text x="235" y="95" text-anchor="middle" fill="#f08468" font-family="Figtree,sans-serif" font-size="11" font-weight="600">snip here</text>
+
+  <!-- Wire stubs to new stack -->
+  <path d="M250 120 H320" stroke="#e8dcc8" stroke-width="2"/>
+  <path d="M250 170 H320" stroke="#e76f51" stroke-width="2"/>
+  <path d="M250 220 H320" stroke="#f08468" stroke-width="2"/>
+
+  <!-- Lever nuts / connectors -->
+  <rect x="320" y="100" width="70" height="140" rx="6" fill="#143552" stroke="#3dbeb0" stroke-width="2"/>
+  <text x="355" y="130" text-anchor="middle" fill="#a8e6df" font-family="Figtree,sans-serif" font-size="11" font-weight="700">Lever</text>
+  <text x="355" y="148" text-anchor="middle" fill="#a8e6df" font-family="Figtree,sans-serif" font-size="11" font-weight="700">nuts /</text>
+  <text x="355" y="166" text-anchor="middle" fill="#a8e6df" font-family="Figtree,sans-serif" font-size="11" font-weight="700">screws</text>
+  <text x="355" y="200" text-anchor="middle" fill="#9bb0c4" font-family="Figtree,sans-serif" font-size="10">no solder</text>
+
+  <path d="M390 120 H450" stroke="#e8dcc8" stroke-width="2"/>
+  <path d="M390 170 H450" stroke="#e76f51" stroke-width="2"/>
+  <path d="M390 220 H450" stroke="#f08468" stroke-width="2"/>
+
+  <!-- New electronics -->
+  <rect x="450" y="70" width="140" height="200" rx="8" fill="#143552" stroke="#e8dcc8" stroke-width="2"/>
+  <text x="520" y="105" text-anchor="middle" fill="#eef4f8" font-family="Bricolage Grotesque,sans-serif" font-size="15" font-weight="700">New stack</text>
+  <text x="520" y="130" text-anchor="middle" fill="#a8e6df" font-family="Figtree,sans-serif" font-size="12">ESP32-S3</text>
+  <text x="520" y="150" text-anchor="middle" fill="#f08468" font-family="Figtree,sans-serif" font-size="12">L298N</text>
+  <text x="520" y="170" text-anchor="middle" fill="#3dbeb0" font-family="Figtree,sans-serif" font-size="12">MAX98357A</text>
+  <text x="520" y="190" text-anchor="middle" fill="#3dbeb0" font-family="Figtree,sans-serif" font-size="12">INMP441</text>
+  <text x="520" y="230" text-anchor="middle" fill="#9bb0c4" font-family="Figtree,sans-serif" font-size="11">Dupont jumpers</text>
+  <text x="520" y="248" text-anchor="middle" fill="#9bb0c4" font-family="Figtree,sans-serif" font-size="11">between modules</text>
+
+  <!-- Keep side -->
+  <rect x="640" y="90" width="120" height="160" rx="8" fill="#143552" stroke="#3dbeb0" stroke-width="2"/>
+  <text x="700" y="125" text-anchor="middle" fill="#a8e6df" font-family="Figtree,sans-serif" font-size="13" font-weight="700">Keep</text>
+  <text x="700" y="155" text-anchor="middle" fill="#eef4f8" font-family="Figtree,sans-serif" font-size="12">Motors</text>
+  <text x="700" y="175" text-anchor="middle" fill="#eef4f8" font-family="Figtree,sans-serif" font-size="12">Speaker</text>
+  <text x="700" y="195" text-anchor="middle" fill="#eef4f8" font-family="Figtree,sans-serif" font-size="12">Linkages</text>
+  <text x="700" y="225" text-anchor="middle" fill="#9bb0c4" font-family="Figtree,sans-serif" font-size="11">untouched</text>
+
+  <text x="400" y="40" text-anchor="middle" fill="#a8e6df" font-family="Figtree,sans-serif" font-size="14" font-weight="600">Recommended: bypass path (minimal soldering)</text>
+  <text x="400" y="350" text-anchor="middle" fill="#9bb0c4" font-family="Figtree,sans-serif" font-size="12">Cut motor + speaker leads at the PCB end only. Motors stay mounted.</text>
+</svg>

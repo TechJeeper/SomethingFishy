@@ -26,8 +26,9 @@
       <span class="section-label">Conversion guide</span>
       <h1>Build your fish</h1>
       <p class="lead">
-        From sealed novelty to Wi‑Fi AI companion. Follow the stages in order the first time —
-        skip ahead once you’ve done a fish before.
+        From sealed novelty to Wi‑Fi AI companion. The recommended path
+        <strong class="text-ink">bypasses the stock microcontroller</strong> — you snip wires at the
+        old board and leave the motors and speaker mounted. Almost no soldering required.
       </p>
     </header>
 
@@ -36,7 +37,7 @@
         <ul class="guide-toc">
           <li><a href="#prep">Prep</a></li>
           <li><a href="#open">Open</a></li>
-          <li><a href="#gut">Gut</a></li>
+          <li><a href="#bypass">Bypass</a></li>
           <li><a href="#identify">Motors</a></li>
           <li><a href="#assemble">Assemble</a></li>
           <li><a href="#wire">Wire</a></li>
@@ -56,15 +57,16 @@
           </p>
           <ul class="checklist">
             <li>Billy Bass (working motors preferred — even if the board is dead)</li>
-            <li>ESP32-S3 with PSRAM, INMP441, MAX98357A, L298N</li>
-            <li>5 V / 3 A supply, USB-C <em>data</em> cable, jumpers</li>
-            <li>Phillips driver, soldering iron, multimeter</li>
+            <li>ESP32-S3 with PSRAM, INMP441, MAX98357A (screw-terminal version if possible), L298N</li>
+            <li>5 V / 3 A supply, USB-C <em>data</em> cable, Dupont jumpers</li>
+            <li>Wago-style lever nuts (or screw terminal blocks) — the no-solder joiners</li>
+            <li>Wire strippers, flush cutters, multimeter, Phillips driver (soldering iron optional)</li>
             <li>Chrome or Edge browser for the flash page</li>
             <li>OpenAI API key with access to Whisper + chat + TTS</li>
           </ul>
           <div class="callout">
             <h4>Time estimate</h4>
-            <p>First build: 3–5 hours including soldering and first successful conversation. Rewiring a second fish: under 2 hours.</p>
+            <p>First build on the bypass path: about 2–3 hours, mostly labeling wires and flashing. A soldering iron is optional insurance, not required.</p>
           </div>
         </section>
 
@@ -90,28 +92,58 @@
           </div>
         </section>
 
-        <section id="gut">
+        <section id="bypass">
           <span class="section-label">Stage 2</span>
-          <h2>Gut the vintage brains</h2>
+          <h2>Bypass the stock microcontroller</h2>
+          <p>
+            You do <strong class="text-ink">not</strong> need to desolder motors or gut the plaque.
+            The stock board becomes dead weight (or comes out later for space). All you need are the
+            motor and speaker wire pairs — cut them at the <em>PCB end</em> so the mechanisms stay intact.
+          </p>
+          <div class="diagram-panel">
+            <img src="assets/diagrams/bypass-path.svg" alt="Bypass path: snip at PCB, keep motors, join with lever nuts" width="800" height="380" />
+          </div>
           <div class="step">
             <div class="step-body">
               <span class="step-num">2</span>
-              <h3>Keep speaker + motors, ditch the PCB</h3>
-              <p>
-                Photograph the stock wiring before you cut anything. Label motor leads with tape:
-                <strong class="text-ink">M</strong> (mouth/head) and <strong class="text-ink">T</strong> (tail).
-              </p>
-              <p>
-                Desolder or unplug the speaker from the original board. Disconnect motor wires from
-                the stock driver. Remove the main PCB, battery contacts, and any IR/sensor boards you won’t reuse.
-              </p>
+              <h3>Label, snip, isolate</h3>
+              <ol style="color: var(--ink-muted); padding-left: 1.25rem">
+                <li style="margin-bottom: 0.55rem">
+                  <strong class="text-ink">Photograph</strong> the stock wiring before you cut.
+                </li>
+                <li style="margin-bottom: 0.55rem">
+                  Trace each motor’s two leads back to the stock PCB. Label with tape:
+                  <strong class="text-ink">M</strong> (mouth/head) and <strong class="text-ink">T</strong> (tail).
+                  Label the speaker pair <strong class="text-ink">SPK</strong>.
+                </li>
+                <li style="margin-bottom: 0.55rem">
+                  <strong class="text-ink">Unplug</strong> if there are connectors. Otherwise
+                  <strong class="text-ink">snip 1–2 cm from the PCB</strong> — keep the long side attached to the motor/speaker.
+                </li>
+                <li style="margin-bottom: 0.55rem">
+                  Strip ~6 mm of insulation. Join to your new harness with
+                  <strong class="text-ink">lever nuts</strong> or screw terminals (no solder).
+                </li>
+                <li style="margin-bottom: 0.55rem">
+                  Tape or heat-shrink the stub ends still on the stock PCB so nothing shorts.
+                  Remove batteries / disconnect the stock power jack so the old MCU stays dark.
+                </li>
+              </ol>
+              <div class="callout">
+                <h4>Why this works</h4>
+                <p>
+                  The stock microcontroller only mattered as a motor/speaker driver. Once those wires
+                  are cut, it cannot fight the ESP32. Leave the board screwed in for mechanical support,
+                  or unscrew and lift it out later if you need room — still without touching motor solder joints.
+                </p>
+              </div>
               <div class="callout warn">
                 <h4>Do not discard</h4>
-                <p>Speaker, mouth/head motor, tail motor, mechanical linkages, and the front plaque. Those are the soul of the build.</p>
+                <p>Speaker, mouth/head motor, tail motor, mechanical linkages, and the front plaque.</p>
               </div>
             </div>
             <div class="step-visual">
-              <img src="assets/steps/02-gut.svg" alt="Diagram: keep speaker and motors, remove PCB" />
+              <img src="assets/steps/02-gut.svg" alt="Diagram: keep speaker and motors, bypass stock PCB" />
             </div>
           </div>
         </section>
@@ -159,8 +191,9 @@
                 from the speaker to reduce feedback.
               </p>
               <p>
-                Mount the MAX98357A close to the speaker terminals. Route motor wires away from
-                I²S clock lines where you can.
+                Mount the MAX98357A close to the speaker leads. Prefer an amp board with
+                <strong class="text-ink">screw terminals</strong> for the speaker — shove the stripped
+                SPK wires in and tighten. Route motor wires away from I2S clock lines where you can.
               </p>
             </div>
             <div class="step-visual">
@@ -171,20 +204,28 @@
 
         <section id="wire">
           <span class="section-label">Stage 5</span>
-          <h2>Wire everything</h2>
+          <h2>Wire everything (solder-light)</h2>
           <p>
-            Follow the full pin maps on the <a href="wiring.html">wiring page</a>. Build in this order
-            so you can smoke-test as you go:
+            Follow the full pin maps on the <a href="wiring.html">wiring page</a>. Use Dupont jumpers
+            between ESP32 / mic / amp / L298N headers. Use lever nuts or the L298N screw terminals
+            for the fish’s motor and speaker leads.
           </p>
           <ol style="color: var(--ink-muted); padding-left: 1.25rem">
-            <li style="margin-bottom: 0.5rem"><strong class="text-ink">Common ground</strong> — ESP32 GND, amp GND, L298N GND, mic GND.</li>
-            <li style="margin-bottom: 0.5rem"><strong class="text-ink">Mic I²S</strong> — GPIO8/9/10 + 3V3. L/R → GND.</li>
-            <li style="margin-bottom: 0.5rem"><strong class="text-ink">Amp I²S</strong> — GPIO11/12/13 + 5V. Speaker to amp outputs.</li>
-            <li style="margin-bottom: 0.5rem"><strong class="text-ink">Motors</strong> — IN1–IN4, ENA/ENB jumpers on, motor outs to M/T leads.</li>
-            <li style="margin-bottom: 0.5rem"><strong class="text-ink">Power</strong> — ESP32 via USB for bring-up; later a dedicated 5 V / motor supply.</li>
+            <li style="margin-bottom: 0.5rem"><strong class="text-ink">Common ground</strong> — ESP32 GND, amp GND, L298N GND, mic GND (Dupont).</li>
+            <li style="margin-bottom: 0.5rem"><strong class="text-ink">Mic I2S</strong> — GPIO8/9/10 + 3V3. L/R to GND (Dupont).</li>
+            <li style="margin-bottom: 0.5rem"><strong class="text-ink">Amp I2S</strong> — GPIO11/12/13 + 5V (Dupont). Speaker pair into amp screw terminals.</li>
+            <li style="margin-bottom: 0.5rem"><strong class="text-ink">Motors</strong> — L298N IN1–IN4 from ESP32 via Dupont; mouth/tail pairs into OUT screw terminals (or lever-nut to flying leads).</li>
+            <li style="margin-bottom: 0.5rem"><strong class="text-ink">Power</strong> — ESP32 via USB for bring-up; later a dedicated 5 V / motor supply into L298N Vin with shared ground.</li>
           </ol>
           <div class="diagram-panel">
             <img src="assets/diagrams/system-overview.svg" alt="System overview diagram" width="800" height="420" />
+          </div>
+          <div class="callout">
+            <h4>When you might still solder</h4>
+            <p>
+              Only if a module lacks pins/terminals, or a wire is too short to strip. Even then, a
+              short pigtail + lever nut beats desoldering a motor from the fish.
+            </p>
           </div>
           <div class="callout">
             <h4>Continuity check</h4>

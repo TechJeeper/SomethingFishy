@@ -28,10 +28,22 @@
       <p class="lead">
         All pin numbers below match the SomethingFishy firmware defaults for ESP32-S3.
         Common ground everywhere. Power the L298N motor supply separately if motors brown out the ESP32.
+        Prefer the <a href="guide.html#bypass">bypass path</a>: snip motor/speaker leads at the stock PCB and join with lever nuts — no motor desoldering.
       </p>
     </header>
 
     <main class="wrap section" style="padding-top: var(--space-lg)">
+      <section class="reveal">
+        <h2>Bypass the stock MCU</h2>
+        <p>
+          Leave motors and the speaker mounted. Cut or unplug their wires at the old board, isolate the stubs,
+          and land the fish-side leads on the L298N / amp with screw terminals or lever nuts.
+        </p>
+        <div class="diagram-panel">
+          <img src="assets/diagrams/bypass-path.svg" alt="Bypass path diagram" width="800" height="380" />
+        </div>
+      </section>
+
       <section class="reveal">
         <h2>System overview</h2>
         <div class="diagram-panel">
