@@ -1,0 +1,372 @@
+/* Interactive wiring diagram + lab simulator */
+
+.wire-diagram-host {
+  background: rgba(12, 33, 56, 0.55);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-sm);
+  overflow-x: auto;
+}
+
+.wire-diagram {
+  width: 100%;
+  min-width: 720px;
+  height: auto;
+  display: block;
+}
+
+.wire-diagram .net-wire {
+  transition: stroke-opacity 0.15s, stroke-width 0.15s;
+}
+
+.wire-diagram .net-wire.is-dim {
+  stroke-opacity: 0.12;
+}
+
+.wire-diagram .net-wire.is-hot {
+  stroke-width: 3.5;
+  stroke-opacity: 1;
+  filter: drop-shadow(0 0 4px rgba(61, 190, 176, 0.55));
+}
+
+.wire-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: var(--space-sm) 0 var(--space-md);
+}
+
+.wire-filters button {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.wire-filters button:hover,
+.wire-filters button.is-active {
+  border-color: var(--teal);
+  color: var(--foam);
+  background: rgba(42, 157, 143, 0.12);
+}
+
+.wire-net-detail {
+  font-size: 0.9rem;
+  color: var(--ink-muted);
+  min-height: 1.4em;
+  margin: 0 0 var(--space-md);
+}
+
+.wire-net-detail strong {
+  color: var(--ink);
+}
+
+/* Lab */
+.lab-root {
+  position: relative;
+  margin: var(--space-md) 0;
+}
+
+.lab-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.lab-hint {
+  font-size: 0.9rem;
+  color: var(--ink-muted);
+  margin: 0 0 var(--space-md);
+}
+
+.lab-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 0.9fr;
+  gap: var(--space-md);
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .lab-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lab-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+.lab-module {
+  --mod-accent: var(--teal);
+  background: rgba(12, 33, 56, 0.85);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--mod-accent);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.7rem 0.75rem;
+}
+
+.lab-module header {
+  margin-bottom: 0.45rem;
+}
+
+.lab-module header strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.lab-module header span {
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+}
+
+.lab-pins {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.lab-pin {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: rgba(6, 16, 28, 0.45);
+  color: var(--ink);
+  font-family: ui-monospace, monospace;
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.lab-pin i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mod-accent);
+  flex-shrink: 0;
+}
+
+.lab-pin:hover {
+  border-color: var(--teal);
+}
+
+.lab-pin.is-selected {
+  border-color: var(--coral);
+  box-shadow: 0 0 0 2px rgba(231, 111, 81, 0.25);
+}
+
+.lab-pin.is-wired i {
+  background: var(--foam);
+}
+
+.lab-pin.is-live {
+  background: rgba(61, 190, 176, 0.25);
+  border-color: var(--teal-bright);
+  animation: pin-pulse 0.45s ease infinite alternate;
+}
+
+@keyframes pin-pulse {
+  from {
+    box-shadow: 0 0 0 0 rgba(61, 190, 176, 0.2);
+  }
+  to {
+    box-shadow: 0 0 0 4px rgba(61, 190, 176, 0.15);
+  }
+}
+
+.lab-side {
+  background: rgba(12, 33, 56, 0.55);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-md);
+  position: sticky;
+  top: calc(var(--nav-h) + 0.75rem);
+}
+
+.lab-side h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.lab-side h3 + .lab-flow,
+.lab-results + h3 {
+  margin-top: var(--space-md);
+}
+
+.lab-pass {
+  color: var(--teal-bright);
+  font-weight: 700;
+}
+
+.lab-fail {
+  color: var(--coral-hot);
+  font-weight: 700;
+}
+
+.lab-check-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  font-size: 0.82rem;
+}
+
+.lab-check-list li {
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-muted);
+}
+
+.lab-check-list li.ok {
+  color: var(--teal-bright);
+}
+
+.lab-check-list li.bad {
+  color: var(--coral-hot);
+}
+
+.lab-check-list li.danger {
+  color: #ff8a7a;
+  font-weight: 600;
+}
+
+.lab-flow {
+  margin: 0;
+  padding-left: 1.15rem;
+  color: var(--ink-muted);
+  font-size: 0.88rem;
+}
+
+.lab-flow li {
+  margin: 0.35rem 0;
+  opacity: 0.55;
+}
+
+.lab-flow li.is-active {
+  opacity: 1;
+  color: var(--foam);
+  font-weight: 700;
+}
+
+.lab-flow li.is-done {
+  opacity: 0.85;
+  color: var(--teal-bright);
+}
+
+.lab-flow code {
+  color: var(--teal-bright);
+  font-size: 0.85em;
+}
+
+.lab-fish {
+  position: relative;
+  height: 70px;
+  margin-top: var(--space-md);
+}
+
+.lab-fish-body {
+  position: absolute;
+  left: 20%;
+  top: 22px;
+  width: 55%;
+  height: 28px;
+  background: var(--coral);
+  border-radius: 40% 50% 50% 40%;
+}
+
+.lab-fish-mouth {
+  position: absolute;
+  left: 16%;
+  top: 28px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--ocean-deep);
+  border-radius: 50%;
+  background: #c45a3e;
+  transform-origin: right center;
+}
+
+.lab-fish-tail {
+  position: absolute;
+  right: 18%;
+  top: 18px;
+  width: 0;
+  height: 0;
+  border-top: 18px solid transparent;
+  border-bottom: 18px solid transparent;
+  border-left: 22px solid #c45a3e;
+  transform-origin: left center;
+}
+
+.lab-fish.is-talking .lab-fish-mouth {
+  animation: mouth-talk 0.22s ease-in-out infinite alternate;
+}
+
+.lab-fish.is-talking .lab-fish-tail {
+  animation: tail-flop 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes mouth-talk {
+  from {
+    transform: scaleY(0.45);
+  }
+  to {
+    transform: scaleY(1.15);
+  }
+}
+
+@keyframes tail-flop {
+  from {
+    transform: rotate(-12deg);
+  }
+  to {
+    transform: rotate(14deg);
+  }
+}
+
+.lab-wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  overflow: visible;
+}
+
+.lab-wires path.is-live {
+  stroke: #a8e6df !important;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 5px rgba(168, 230, 223, 0.6));
+}
+
+.lab-root .lab-toolbar,
+.lab-root .lab-hint {
+  position: relative;
+  z-index: 3;
+}
+
+.lab-root .lab-grid {
+  position: relative;
+  z-index: 1;
+}

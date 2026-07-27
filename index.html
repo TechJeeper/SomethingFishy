@@ -8,8 +8,8 @@
       name="description"
       content="A complete guide to converting a Big Mouth Billy Bass into an ESP32-powered AI talking fish. Wiring, BOM, firmware, and browser flashing."
     />
-    <link rel="stylesheet" href="css/styles.css?v=3" />
-    <link rel="icon" href="assets/icons/favicon.svg?v=3" type="image/svg+xml" />
+    <link rel="stylesheet" href="css/styles.css?v=4" />
+    <link rel="icon" href="assets/icons/favicon.svg?v=4" type="image/svg+xml" />
   </head>
   <body>
     <div class="site-bg" aria-hidden="true"></div>
@@ -22,6 +22,7 @@
       <ul class="nav-links" id="nav-menu">
         <li><a href="guide.html">Guide</a></li>
         <li><a href="wiring.html">Wiring</a></li>
+        <li><a href="lab.html">Lab</a></li>
         <li><a href="bom.html">Parts</a></li>
         <li><a class="nav-cta" href="flash.html">Flash Firmware</a></li>
       </ul>
@@ -130,6 +131,7 @@
         <div class="btn-group">
           <a class="btn btn-secondary" href="bom.html">Bill of materials</a>
           <a class="btn btn-secondary" href="wiring.html">Wiring diagrams</a>
+          <a class="btn btn-secondary" href="lab.html">Wiring Lab</a>
         </div>
       </section>
 
@@ -144,7 +146,7 @@
             <strong class="text-ink">Bypass the stock board</strong> — Snip motor + speaker wires at the PCB; leave mechanisms mounted.
           </li>
           <li style="color: var(--ink-muted); padding: 0.5rem 0">
-            <strong class="text-ink">Wire the brain</strong> — Dupont jumpers + lever nuts / screw terminals to ESP32, mic, amp, L298N.
+            <strong class="text-ink">Wire the brain</strong> — Validate in the <a href="lab.html">Wiring Lab</a>, then Dupont + lever nuts to ESP32, mic, amp, L298N.
           </li>
           <li style="color: var(--ink-muted); padding: 0.5rem 0">
             <strong class="text-ink">Flash &amp; talk</strong> — Configure OpenAI + Wi‑Fi on the flash page, then say hello.
@@ -167,6 +169,6 @@
       </div>
     </footer>
 
-    <script src="js/main.js?v=3"></script>
+    <script src="js/main.js?v=4"></script>
   </body>
 </html>
