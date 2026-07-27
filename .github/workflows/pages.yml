@@ -1,0 +1,60 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PlatformIO
+        run: pip install -U platformio
+
+      - name: Build firmware
+        working-directory: firmware
+        run: pio run -e esp32-s3
+
+      - name: Stage binaries for the site
+        run: |
+          mkdir -p firmware-bin
+          BUILD=firmware/.pio/build/esp32-s3
+          cp "$BUILD/firmware.bin" firmware-bin/
+          cp "$BUILD/bootloader.bin" firmware-bin/
+          cp "$BUILD/partitions.bin" firmware-bin/
+          # Arduino-ESP32 boot_app0 lives in the platform package
+          BOOT_APP=$(find "$HOME/.platformio" -name boot_app0.bin 2>/dev/null | head -n 1)
+          if [ -n "$BOOT_APP" ]; then cp "$BOOT_APP" firmware-bin/boot_app0.bin; fi
+          ls -la firmware-bin/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wiring — SomethingFishy</title>
+    <meta name="description" content="Detailed ESP32-S3 wiring diagrams for Billy Bass: INMP441, MAX98357A, and L298N motors." />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <div class="site-bg" aria-hidden="true"></div>
+
+    <nav class="nav" aria-label="Primary">
+      <a class="nav-brand" href="index.html">Something<span>Fishy</span></a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-menu">Menu</button>
+      <ul class="nav-links" id="nav-menu">
+        <li><a href="guide.html">Guide</a></li>
+        <li><a href="wiring.html" aria-current="page">Wiring</a></li>
+        <li><a href="bom.html">Parts</a></li>
+        <li><a class="nav-cta" href="flash.html">Flash Firmware</a></li>
+      </ul>
+    </nav>
+
+    <header class="page-hero wrap">
+      <span class="section-label">Pin maps</span>
+      <h1>Wiring diagrams</h1>
+      <p class="lead">
+        All pin numbers below match the SomethingFishy firmware defaults for ESP32-S3.
+        Common ground everywhere. Power the L298N motor supply separately if motors brown out the ESP32.
+      </p>
+    </header>
+
+    <main class="wrap section" style="padding-top: var(--space-lg)">
+      <section class="reveal">
+        <h2>System overview</h2>
+        <div class="diagram-panel">
+          <object type="image/svg+xml" data="assets/diagrams/system-overview.svg" aria-label="System overview diagram">
+            <img src="assets/diagrams/system-overview.svg" alt="System overview: mic, ESP32, amp, motors" />
+          </object>
+          <div class="diagram-legend">
+            <span><i class="legend-swatch" style="background:#3dbeb0"></i> Digital / I²S</span>
+            <span><i class="legend-swatch" style="background:#e76f51"></i> Motor drive</span>
+            <span><i class="legend-swatch" style="background:#e8dcc8"></i> Power</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="reveal">
+        <h2>INMP441 microphone</h2>
+        <p>I²S RX on a dedicated bus. Tie <strong class="text-ink">L/R to GND</strong> so the mic always sits on the left channel.</p>
+        <div class="diagram-panel">
+          <object type="image/svg+xml" data="assets/diagrams/mic-wiring.svg" aria-label="INMP441 wiring diagram"></object>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>INMP441</th><th>ESP32-S3</th><th>Notes</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>VDD</td><td><span class="pin">3V3</span></td><td>Do not use 5 V</td></tr>
+              <tr><td>GND</td><td><span class="pin">GND</span></td><td>Common ground</td></tr>
+              <tr><td>SD (DOUT)</td><td><span class="pin">GPIO8</span></td><td>I²S data in</td></tr>
+              <tr><td>WS (LRC)</td><td><span class="pin">GPIO9</span></td><td>Word select</td></tr>
+              <tr><td>SCK (BCLK)</td><td><span class="pin">GPIO10</span></td><td>Bit clock</td></tr>
+              <tr><td>L/R</td><td><span class="pin">GND</span></td><td>Left channel select</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="reveal">
+        <h2>MAX98357A amplifier</h2>
+        <p>Second I²S bus for audio out to the stock Billy speaker. Keep speaker wires twisted and short.</p>
+        <div class="diagram-panel">
+          <object type="image/svg+xml" data="assets/diagrams/amp-wiring.svg" aria-label="MAX98357A wiring diagram"></object>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>MAX98357A</th><th>ESP32-S3 / Speaker</th><th>Notes</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>VIN</td><td><span class="pin">5V</span></td><td>Or shared 5 V rail</td></tr>
+              <tr><td>GND</td><td><span class="pin">GND</span></td><td>Common ground</td></tr>
+              <tr><td>DIN</td><td><span class="pin">GPIO11</span></td><td>I²S data out</td></tr>
+              <tr><td>LRC / WS</td><td><span class="pin">GPIO12</span></td><td>Word select</td></tr>
+              <tr><td>BCLK</td><td><span class="pin">GPIO13</span></td><td>Bit clock</td></tr>
+              <tr><td>GAIN</td><td>float / 100k→GND</td><td>Default ~9 dB; lower if distorted</td></tr>
+              <tr><td>SD</td><td><span class="pin">3V3</span> or float</td><td>Shutdown — keep enabled</td></tr>
+              <tr><td>+ / −</td><td>Speaker terminals</td><td>Reuse Billy’s speaker</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="reveal">
+        <h2>L298N motor driver</h2>
+        <p>
+          Channel A = mouth / head motor. Channel B = tail motor. If a motor runs the wrong way,
+          swap its two output leads — do not invert in firmware first.
+        </p>
+        <div class="diagram-panel">
+          <object type="image/svg+xml" data="assets/diagrams/motor-wiring.svg" aria-label="L298N motor wiring diagram"></object>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>L298N</th><th>Connection</th><th>Role</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>IN1</td><td><span class="pin">GPIO16</span></td><td>Mouth / head direction A</td></tr>
+              <tr><td>IN2</td><td><span class="pin">GPIO17</span></td><td>Mouth / head direction B</td></tr>
+              <tr><td>IN3</td><td><span class="pin">GPIO4</span></td><td>Tail direction A</td></tr>
+              <tr><td>IN4</td><td><span class="pin">GPIO5</span></td><td>Tail direction B</td></tr>
+              <tr><td>ENA / ENB</td><td>5 V (jumpers on)</td><td>Enable both channels</td></tr>
+              <tr><td>OUT1 / OUT2</td><td>Mouth / head motor</td><td>Original Billy motor leads</td></tr>
+              <tr><td>OUT3 / OUT4</td><td>Tail motor</td><td>Original Billy motor leads</td></tr>
+              <tr><td>5V / GND</td><td>Logic supply + common GND</td><td>Share GND with ESP32</td></tr>
+              <tr><td>12V / Vin</td><td>7–12 V motor supply <em>or</em> 5 V if motors tolerate it</td><td>Do not back-feed ESP32 5 V from Vin</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn">
+          <h4>Power tip</h4>
+          <p>
+            If the ESP32 resets when the mouth opens, the motors are starving the 5 V rail.
+            Power L298N Vin from a separate supply and join grounds only.
+          </p>
+        </div>
+      </section>
+
+      <section class="reveal">
+        <h2>Optional talk button</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Button</th><th>ESP32-S3</th><th>Notes</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>One leg</td><td><span class="pin">GPIO14</span></td><td>Internal pull-up in firmware</td></tr>
+              <tr><td>Other leg</td><td><span class="pin">GND</span></td><td>Active low</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="reveal">
+        <h2>Full pin cheat sheet</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>GPIO</th><th>Function</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="pin">8</span></td><td>Mic SD (DOUT)</td></tr>
+              <tr><td><span class="pin">9</span></td><td>Mic WS</td></tr>
+              <tr><td><span class="pin">10</span></td><td>Mic BCLK</td></tr>
+              <tr><td><span class="pin">11</span></td><td>Amp DIN</td></tr>
+              <tr><td><span class="pin">12</span></td><td>Amp LRC</td></tr>
+              <tr><td><span class="pin">13</span></td><td>Amp BCLK</td></tr>
+              <tr><td><span class="pin">14</span></td><td>Talk button (optional)</td></tr>
+              <tr><td><span class="pin">16 / 17</span></td><td>Mouth motor IN1 / IN2</td></tr>
+              <tr><td><span class="pin">4 / 5</span></td><td>Tail motor IN3 / IN4</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="btn-group">
+          <a class="btn btn-primary" href="guide.html#assemble">Back to assembly</a>
+          <a class="btn btn-secondary" href="flash.html">Flash firmware</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap footer-inner">
+        <p>SomethingFishy — open hardware conversion guide.</p>
+        <div class="footer-links">
+          <a href="guide.html">Guide</a>
+          <a href="bom.html">Parts</a>
+          <a href="flash.html">Flash</a>
+        </div>
+      </div>
+    </footer>
+    <script src="js/main.js"></script>
+  </body>
+</html>

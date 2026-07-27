@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Parts — SomethingFishy</title>
+    <meta name="description" content="Bill of materials for converting Billy Bass to an ESP32 AI fish, with Amazon search links." />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <div class="site-bg" aria-hidden="true"></div>
+
+    <nav class="nav" aria-label="Primary">
+      <a class="nav-brand" href="index.html">Something<span>Fishy</span></a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-menu">Menu</button>
+      <ul class="nav-links" id="nav-menu">
+        <li><a href="guide.html">Guide</a></li>
+        <li><a href="wiring.html">Wiring</a></li>
+        <li><a href="bom.html" aria-current="page">Parts</a></li>
+        <li><a class="nav-cta" href="flash.html">Flash Firmware</a></li>
+      </ul>
+    </nav>
+
+    <header class="page-hero wrap">
+      <span class="section-label">Bill of materials</span>
+      <h1>What to buy</h1>
+      <p class="lead">
+        Everything below is enough for one fish. Prices are approximate street prices in USD —
+        check the Amazon links for current listings. Prefer an <strong class="text-ink">ESP32-S3 with PSRAM</strong>
+        (8MB+ flash) for stable audio buffering.
+      </p>
+    </header>
+
+    <main class="wrap section" style="padding-top: var(--space-lg)">
+      <div class="bom-grid reveal">
+        <article class="bom-item">
+          <div>
+            <h3>Big Mouth Billy Bass (or clone)</h3>
+            <p class="bom-meta">The donor fish. Original Gemmy units and modern remakes both work — you need the mouth, head/body, and tail motors plus the speaker.</p>
+          </div>
+          <div class="bom-actions">
+            <span class="bom-price">~$25–45</span>
+            <a class="amazon-link" href="https://www.amazon.com/s?k=Big+Mouth+Billy+Bass" target="_blank" rel="noopener noreferrer">Amazon ↗</a>
+          </div>
+        </article>
+
+        <article class="bom-item">
+          <div>
+            <h3>ESP32-S3 DevKit (N16R8 or similar)</h3>
+            <p class="bom-meta">ESP32-S3-DevKitC-1 with 16MB flash + 8MB PSRAM recommended. Native USB (USB-OTG) simplifies flashing from Chrome.</p>
+          </div>
+          <div class="bom-actions">
+            <span class="bom-price">~$10–18</span>
+            <a class="amazon-link" href="https://www.amazon.com/s?k=ESP32-S3-DevKitC-1+N16R8" target="_blank" rel="noopener noreferrer">Amazon ↗</a>
+          </div>
+        </article>
+
+        <article class="bom-item">
+          <div>
+            <h3>INMP441 I²S MEMS Microphone</h3>
+            <p class="bom-meta">Digital mic module. Tie L/R to GND for left channel. Avoid analog electret mics — noise floor is worse near the motors.</p>
+          </div>
+          <div class="bom-actions">
+            <span class="bom-price">~$5–10</span>
+            <a class="amazon-link" href="https://www.amazon.com/s?k=INMP441+I2S+microphone" target="_blank" rel="noopener noreferrer">Amazon ↗</a>
+          </div>
+        </article>
+
+        <article class="bom-item">
+          <div>
+            <h3>MAX98357A I²S Amplifier</h3>
+            <p class="bom-meta">Class-D amp that accepts I²S and drives the stock Billy speaker (≈4–8 Ω). Gain pin typically left floating for 9 dB.</p>
+          </div>
+          <div class="bom-actions">
+            <span class="bom-price">~$5–8</span>
+            <a class="amazon-link" href="https://www.amazon.com/s?k=MAX98357A+I2S+amplifier" target="_blank" rel="noopener noreferrer">Amazon ↗</a>
+          </div>
+        </article>
+
+        <article class="bom-item">
+          <div>
+            <h3>L298N Dual H-Bridge Motor Driver</h3>
+            <p class="bom-meta">Drives two DC motors (mouth/head and tail). Use the 5 V logic supply from the onboard regulator when Vin is 7–12 V, or feed 5 V to the logic rail carefully.</p>
+          </div>
+          <div class="bom-actions">
+            <span class="bom-price">~$4–8</span>
+            <a class="amazon-link" href="https://www.amazon.com/s?k=L298N+motor+driver+module" target="_blank" rel="noopener noreferrer">Amazon ↗</a>
+          </div>
+        </article>
+
+        <article class="bom-item">
+          <div>
+            <h3>5 V / 3 A USB-C power supply</h3>
+            <p class="bom-meta">Motors spike current when they stall. A phone charger often browns out — use a solid 5 V wall wart or a barrel jack into the L298N Vin with a shared ground.</p>
+          </div>
+          <div class="bom-actions">
+            <span class="bom-price">~$10–15</span>
+            <a class="amazon-link" href="https://www.amazon.com/s?k=5V+3A+USB-C+power+supply" target="_blank" rel="noopener noreferrer">Amazon ↗</a>
+          </div>
+        </article>
+
+        <article class="bom-item">
+          <div>
+            <h3>Dupont jumper wires + breadboard (or protoboard)</h3>
+            <p class="bom-meta">Fine for prototyping. For a permanent install, solder to a protoboard or use the optional 3D-printed backplate mounts.</p>
+          </div>
+          <div class="bom-actions">
+            <span class="bom-price">~$8–12</span>
+            <a class="amazon-link" href="https://www.amazon.com/s?k=Dupont+jumper+wire+kit+breadboard" target="_blank" rel="noopener noreferrer">Amazon ↗</a>
+          </div>
+        </article>
+
+        <article class="bom-item">
+          <div>
+            <h3>USB-C data cable</h3>
+            <p class="bom-meta">Must support data (not charge-only) for Web Serial flashing. Many cheap cables fail here — keep a known-good one.</p>
+          </div>
+          <div class="bom-actions">
+            <span class="bom-price">~$6–10</span>
+            <a class="amazon-link" href="https://www.amazon.com/s?k=USB-C+data+cable" target="_blank" rel="noopener noreferrer">Amazon ↗</a>
+          </div>
+        </article>
+
+        <article class="bom-item">
+          <div>
+            <h3>Optional: push button (wake / talk)</h3>
+            <p class="bom-meta">Momentary button to GPIO for push-to-talk if you prefer not to use the wake-word path on first boot.</p>
+          </div>
+          <div class="bom-actions">
+            <span class="bom-price">~$5</span>
+            <a class="amazon-link" href="https://www.amazon.com/s?k=momentary+push+button+6mm" target="_blank" rel="noopener noreferrer">Amazon ↗</a>
+          </div>
+        </article>
+
+        <article class="bom-item">
+          <div>
+            <h3>Optional: 3D-printed backplate</h3>
+            <p class="bom-meta">Replaces the original plastic rear shell with mounts for ESP32 + L298N. Search MakerWorld for “Billy Bass backplate” (Thom Koopman / community designs).</p>
+          </div>
+          <div class="bom-actions">
+            <span class="bom-price">~$0–15</span>
+            <a class="amazon-link" href="https://www.makerworld.com/en/search/models?keyword=billy%20bass%20backplate" target="_blank" rel="noopener noreferrer">MakerWorld ↗</a>
+          </div>
+        </article>
+      </div>
+
+      <div class="bom-total reveal">
+        <span>Typical build total</span>
+        <span class="bom-price">≈ $75–120</span>
+      </div>
+
+      <div class="callout reveal">
+        <h4>Tools you’ll want</h4>
+        <p>
+          Phillips screwdriver, small flat pry tool, wire strippers, soldering iron (for speaker leads and permanent joints),
+          multimeter, and zip ties or hot glue for strain relief. Safety glasses when prying the shell — the plastic clips can snap.
+        </p>
+      </div>
+
+      <div class="btn-group reveal">
+        <a class="btn btn-primary" href="guide.html">Continue to the guide</a>
+        <a class="btn btn-secondary" href="wiring.html">Skip to wiring</a>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap footer-inner">
+        <p>SomethingFishy — open hardware conversion guide.</p>
+        <div class="footer-links">
+          <a href="guide.html">Guide</a>
+          <a href="flash.html">Flash</a>
+        </div>
+      </div>
+    </footer>
+    <script src="js/main.js"></script>
+  </body>
+</html>

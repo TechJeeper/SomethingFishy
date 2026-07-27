@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 340" role="img">
+  <title>MAX98357A to ESP32-S3 wiring</title>
+  <rect width="720" height="340" fill="#0c2138" rx="4"/>
+  <rect x="50" y="50" width="170" height="240" rx="8" fill="#143552" stroke="#3dbeb0" stroke-width="2"/>
+  <text x="135" y="80" text-anchor="middle" fill="#a8e6df" font-family="Figtree,sans-serif" font-size="15" font-weight="700">MAX98357A</text>
+  <g font-family="ui-monospace,monospace" font-size="12" fill="#eef4f8">
+    <circle cx="200" cy="110" r="5" fill="#e8dcc8"/><text x="70" y="114">VIN</text>
+    <circle cx="200" cy="135" r="5" fill="#666"/><text x="70" y="139">GND</text>
+    <circle cx="200" cy="160" r="5" fill="#3dbeb0"/><text x="70" y="164">DIN</text>
+    <circle cx="200" cy="185" r="5" fill="#3dbeb0"/><text x="70" y="189">LRC</text>
+    <circle cx="200" cy="210" r="5" fill="#3dbeb0"/><text x="70" y="214">BCLK</text>
+    <circle cx="200" cy="235" r="5" fill="#e76f51"/><text x="70" y="239">+</text>
+    <circle cx="200" cy="260" r="5" fill="#e76f51"/><text x="70" y="264"></text>
+  </g>
+  <rect x="480" y="40" width="190" height="200" rx="8" fill="#143552" stroke="#e8dcc8" stroke-width="2"/>
+  <text x="575" y="70" text-anchor="middle" fill="#eef4f8" font-family="Bricolage Grotesque,sans-serif" font-size="16" font-weight="700">ESP32-S3</text>
+  <g font-family="ui-monospace,monospace" font-size="12" fill="#eef4f8">
+    <circle cx="500" cy="110" r="5" fill="#e8dcc8"/><text x="515" y="114">5V</text>
+    <circle cx="500" cy="135" r="5" fill="#666"/><text x="515" y="139">GND</text>
+    <circle cx="500" cy="160" r="5" fill="#3dbeb0"/><text x="515" y="164">GPIO11</text>
+    <circle cx="500" cy="185" r="5" fill="#3dbeb0"/><text x="515" y="189">GPIO12</text>
+    <circle cx="500" cy="210" r="5" fill="#3dbeb0"/><text x="515" y="214">GPIO13</text>
+  </g>
+  <rect x="480" y="260" width="190" height="50" rx="8" fill="#143552" stroke="#e76f51" stroke-width="2"/>
+  <text x="575" y="290" text-anchor="middle" fill="#f08468" font-family="Figtree,sans-serif" font-size="13" font-weight="600">Billy Speaker</text>
+  <path d="M205 110 H470" stroke="#e8dcc8" stroke-width="2"/>
+  <path d="M205 135 H470" stroke="#888" stroke-width="2"/>
+  <path d="M205 160 H470" stroke="#3dbeb0" stroke-width="2"/>
+  <path d="M205 185 H470" stroke="#3dbeb0" stroke-width="2"/>
+  <path d="M205 210 H470" stroke="#3dbeb0" stroke-width="2"/>
+  <path d="M205 235 H340 V285 H480" stroke="#e76f51" stroke-width="2" fill="none"/>
+  <path d="M205 260 H360 V295 H480" stroke="#e76f51" stroke-width="2" fill="none"/>
+</svg>

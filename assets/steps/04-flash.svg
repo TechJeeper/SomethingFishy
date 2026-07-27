@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 280" role="img">
+  <title>Step: Wire and test</title>
+  <rect width="400" height="280" fill="transparent"/>
+  <rect x="60" y="80" width="120" height="80" rx="6" fill="#143552" stroke="#e8dcc8" stroke-width="2"/>
+  <text x="120" y="125" text-anchor="middle" fill="#eef4f8" font-family="Figtree,sans-serif" font-size="12" font-weight="700">ESP32</text>
+  <path d="M180 100 H240" stroke="#3dbeb0" stroke-width="2"/>
+  <path d="M180 120 H240" stroke="#3dbeb0" stroke-width="2"/>
+  <path d="M180 140 H240" stroke="#e76f51" stroke-width="2"/>
+  <rect x="240" y="70" width="100" height="100" rx="6" fill="#143552" stroke="#3dbeb0" stroke-width="1.5"/>
+  <text x="290" y="110" text-anchor="middle" fill="#a8e6df" font-family="Figtree,sans-serif" font-size="11">Modules</text>
+  <text x="290" y="128" text-anchor="middle" fill="#9bb0c4" font-family="Figtree,sans-serif" font-size="10">wired</text>
+  <!-- USB -->
+  <rect x="90" y="180" width="60" height="20" rx="3" fill="#2a9d8f"/>
+  <path d="M120 200 V230 H200" stroke="#2a9d8f" stroke-width="3" fill="none"/>
+  <rect x="200" y="215" width="80" height="30" rx="4" fill="#0c2138" stroke="#e8dcc8"/>
+  <text x="240" y="235" text-anchor="middle" fill="#eef4f8" font-family="Figtree,sans-serif" font-size="11">USB host</text>
+  <text x="200" y="40" text-anchor="middle" fill="#a8e6df" font-family="Figtree,sans-serif" font-size="13" font-weight="600">Wire · power · flash</text>
+</svg>

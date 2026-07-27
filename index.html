@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SomethingFishy — Turn Billy Bass into an ESP32 AI</title>
+    <meta
+      name="description"
+      content="A complete guide to converting a Big Mouth Billy Bass into an ESP32-powered AI talking fish. Wiring, BOM, firmware, and browser flashing."
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <div class="site-bg" aria-hidden="true"></div>
+
+    <nav class="nav" aria-label="Primary">
+      <a class="nav-brand" href="index.html">Something<span>Fishy</span></a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-menu">
+        Menu
+      </button>
+      <ul class="nav-links" id="nav-menu">
+        <li><a href="guide.html">Guide</a></li>
+        <li><a href="wiring.html">Wiring</a></li>
+        <li><a href="bom.html">Parts</a></li>
+        <li><a class="nav-cta" href="flash.html">Flash Firmware</a></li>
+      </ul>
+    </nav>
+
+    <header class="hero">
+      <div class="hero-visual" aria-hidden="true">
+        <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#0c2138" stop-opacity="0.2" />
+              <stop offset="100%" stop-color="#06101c" stop-opacity="0.85" />
+            </linearGradient>
+            <linearGradient id="fishBody" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#e76f51" />
+              <stop offset="55%" stop-color="#c45a3e" />
+              <stop offset="100%" stop-color="#8b3a28" />
+            </linearGradient>
+            <radialGradient id="caustic" cx="50%" cy="20%" r="70%">
+              <stop offset="0%" stop-color="#3dbeb0" stop-opacity="0.35" />
+              <stop offset="100%" stop-color="#06101c" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+          <rect width="1440" height="900" fill="url(#caustic)" class="caustic-layer" />
+          <g class="fish-float" transform="translate(720 420)">
+            <!-- Mount plaque hint -->
+            <ellipse cx="40" cy="110" rx="220" ry="28" fill="#0a1628" opacity="0.45" />
+            <!-- Body -->
+            <ellipse cx="0" cy="0" rx="210" ry="95" fill="url(#fishBody)" />
+            <!-- Scales suggestion -->
+            <path d="M-80,-40 Q-40,0 -80,40 M-40,-50 Q0,-5 -40,50 M0,-55 Q40,-5 0,55 M40,-50 Q80,-5 40,50"
+                  stroke="#f4a48a" stroke-width="1.5" fill="none" opacity="0.35" />
+            <!-- Head / mouth -->
+            <ellipse cx="-150" cy="5" rx="70" ry="68" fill="#d46245" />
+            <path d="M-200,10 Q-160,35 -120,12" stroke="#06101c" stroke-width="6" fill="none" stroke-linecap="round" />
+            <!-- Eye -->
+            <circle cx="-175" cy="-20" r="18" fill="#eef4f8" />
+            <circle cx="-172" cy="-18" r="9" fill="#06101c" />
+            <circle cx="-168" cy="-22" r="3" fill="#fff" />
+            <!-- Tail -->
+            <path d="M180,-10 Q260,-80 250,-20 Q270,40 180,20 Z" fill="#c45a3e" />
+            <path d="M185,-5 Q235,-45 230,-15 Q245,25 185,15 Z" fill="#e76f51" opacity="0.7" />
+            <!-- Dorsal fin -->
+            <path d="M-40,-90 Q20,-140 80,-85 Q30,-70 -40,-90 Z" fill="#a84832" />
+            <!-- Circuit accents -->
+            <g stroke="#3dbeb0" stroke-width="1.5" fill="none" opacity="0.7">
+              <path d="M-20,55 L20,55 L35,70" />
+              <circle cx="35" cy="70" r="3" fill="#3dbeb0" />
+              <path d="M50,40 L90,40 L105,25" />
+              <rect x="100" y="18" width="14" height="14" rx="2" fill="#2a9d8f" stroke="none" opacity="0.9" />
+            </g>
+          </g>
+          <rect width="1440" height="900" fill="url(#water)" />
+        </svg>
+      </div>
+
+      <div class="hero-content">
+        <h1 class="hero-brand">Something<span class="accent">Fishy</span></h1>
+        <p class="hero-tagline">Give Billy Bass a brain.</p>
+        <p class="hero-sub">
+          A complete conversion guide — open the fish, rewire the motors, flash an ESP32-S3,
+          and chat with an AI that lip-syncs like it’s 1999.
+        </p>
+        <div class="btn-group">
+          <a class="btn btn-primary" href="guide.html">Start the build</a>
+          <a class="btn btn-secondary" href="flash.html">Flash firmware</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="wrap section" style="padding-top: 0">
+        <div class="features reveal">
+          <div class="feature">
+            <h3>Hardware walkthrough</h3>
+            <p>
+              Disassembly photos-as-diagrams, pin maps, and motor reuse so you keep the mouth,
+              head, and tail that made Billy iconic.
+            </p>
+          </div>
+          <div class="feature">
+            <h3>OpenAI voice loop</h3>
+            <p>
+              INMP441 mic in, MAX98357A speaker out. Whisper → GPT → TTS, with mouth motors
+              driven from audio energy in real time.
+            </p>
+          </div>
+          <div class="feature">
+            <h3>Flash from the browser</h3>
+            <p>
+              Enter Wi‑Fi and your OpenAI API key, then program the ESP32 over USB with Web Serial —
+              no Arduino IDE required.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="wrap section reveal">
+        <span class="section-label">What you’ll build</span>
+        <h2>A wall-mounted AI with gills</h2>
+        <p class="lead">
+          SomethingFishy replaces the original Billy Bass sound board with an ESP32-S3, an I²S
+          microphone, an I²S amplifier, and an L298N motor driver. Say the wake phrase, ask a
+          question, and watch the mouth and tail animate with the reply.
+        </p>
+        <div class="btn-group">
+          <a class="btn btn-secondary" href="bom.html">Bill of materials</a>
+          <a class="btn btn-secondary" href="wiring.html">Wiring diagrams</a>
+        </div>
+      </section>
+
+      <section class="wrap section reveal">
+        <span class="section-label">Build path</span>
+        <h2>Four stages</h2>
+        <ol class="step-list" style="counter-reset: none; list-style: decimal; padding-left: 1.25rem; gap: 1rem; display: grid">
+          <li style="color: var(--ink-muted); padding: 0.5rem 0">
+            <strong class="text-ink">Parts &amp; prep</strong> — Order the BOM, gather tools, print the optional backplate.
+          </li>
+          <li style="color: var(--ink-muted); padding: 0.5rem 0">
+            <strong class="text-ink">Gut the fish</strong> — Keep speaker + motors; remove the vintage PCB.
+          </li>
+          <li style="color: var(--ink-muted); padding: 0.5rem 0">
+            <strong class="text-ink">Wire the brain</strong> — ESP32-S3 to mic, amp, and L298N per the pin map.
+          </li>
+          <li style="color: var(--ink-muted); padding: 0.5rem 0">
+            <strong class="text-ink">Flash &amp; talk</strong> — Configure OpenAI + Wi‑Fi on the flash page, then say hello.
+          </li>
+        </ol>
+        <div class="btn-group">
+          <a class="btn btn-primary" href="guide.html">Open the full guide</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap footer-inner">
+        <p>SomethingFishy — open hardware conversion guide.</p>
+        <div class="footer-links">
+          <a href="guide.html">Guide</a>
+          <a href="flash.html">Flash</a>
+          <a href="bom.html">Parts</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+  </body>
+</html>

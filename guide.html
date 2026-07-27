@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Build Guide — SomethingFishy</title>
+    <meta name="description" content="Step-by-step guide to convert Big Mouth Billy Bass into an ESP32 AI talking fish." />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <div class="site-bg" aria-hidden="true"></div>
+
+    <nav class="nav" aria-label="Primary">
+      <a class="nav-brand" href="index.html">Something<span>Fishy</span></a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-menu">Menu</button>
+      <ul class="nav-links" id="nav-menu">
+        <li><a href="guide.html" aria-current="page">Guide</a></li>
+        <li><a href="wiring.html">Wiring</a></li>
+        <li><a href="bom.html">Parts</a></li>
+        <li><a class="nav-cta" href="flash.html">Flash Firmware</a></li>
+      </ul>
+    </nav>
+
+    <header class="page-hero wrap">
+      <span class="section-label">Conversion guide</span>
+      <h1>Build your fish</h1>
+      <p class="lead">
+        From sealed novelty to Wi‑Fi AI companion. Follow the stages in order the first time —
+        skip ahead once you’ve done a fish before.
+      </p>
+    </header>
+
+    <div class="wrap guide-layout">
+      <nav aria-label="Guide sections">
+        <ul class="guide-toc">
+          <li><a href="#prep">Prep</a></li>
+          <li><a href="#open">Open</a></li>
+          <li><a href="#gut">Gut</a></li>
+          <li><a href="#identify">Motors</a></li>
+          <li><a href="#assemble">Assemble</a></li>
+          <li><a href="#wire">Wire</a></li>
+          <li><a href="#flash">Flash</a></li>
+          <li><a href="#use">Use</a></li>
+          <li><a href="#troubleshoot">Fix</a></li>
+        </ul>
+      </nav>
+
+      <div class="guide-content">
+        <section id="prep">
+          <span class="section-label">Stage 0</span>
+          <h2>Prep the bench</h2>
+          <p>
+            Order everything on the <a href="bom.html">bill of materials</a>. While parts ship, skim the
+            <a href="wiring.html">wiring diagrams</a> so the pin map is familiar.
+          </p>
+          <ul class="checklist">
+            <li>Billy Bass (working motors preferred — even if the board is dead)</li>
+            <li>ESP32-S3 with PSRAM, INMP441, MAX98357A, L298N</li>
+            <li>5 V / 3 A supply, USB-C <em>data</em> cable, jumpers</li>
+            <li>Phillips driver, soldering iron, multimeter</li>
+            <li>Chrome or Edge browser for the flash page</li>
+            <li>OpenAI API key with access to Whisper + chat + TTS</li>
+          </ul>
+          <div class="callout">
+            <h4>Time estimate</h4>
+            <p>First build: 3–5 hours including soldering and first successful conversation. Rewiring a second fish: under 2 hours.</p>
+          </div>
+        </section>
+
+        <section id="open">
+          <span class="section-label">Stage 1</span>
+          <h2>Open the shell</h2>
+          <div class="step">
+            <div class="step-body">
+              <span class="step-num">1</span>
+              <h3>Flip Billy and remove the rear screws</h3>
+              <p>
+                Lay the plaque face-down on a soft cloth. Remove every screw on the backplate
+                (typically 4–6 Phillips). Some remakes hide screws under rubber feet — peel carefully.
+              </p>
+              <p>
+                Gently pry the rear cover. Plastic clips along the rim can crack; work a thin tool
+                around the edge instead of yanking the plaque.
+              </p>
+            </div>
+            <div class="step-visual">
+              <img src="assets/steps/01-open.svg" alt="Diagram: remove rear screws on Billy Bass" />
+            </div>
+          </div>
+        </section>
+
+        <section id="gut">
+          <span class="section-label">Stage 2</span>
+          <h2>Gut the vintage brains</h2>
+          <div class="step">
+            <div class="step-body">
+              <span class="step-num">2</span>
+              <h3>Keep speaker + motors, ditch the PCB</h3>
+              <p>
+                Photograph the stock wiring before you cut anything. Label motor leads with tape:
+                <strong class="text-ink">M</strong> (mouth/head) and <strong class="text-ink">T</strong> (tail).
+              </p>
+              <p>
+                Desolder or unplug the speaker from the original board. Disconnect motor wires from
+                the stock driver. Remove the main PCB, battery contacts, and any IR/sensor boards you won’t reuse.
+              </p>
+              <div class="callout warn">
+                <h4>Do not discard</h4>
+                <p>Speaker, mouth/head motor, tail motor, mechanical linkages, and the front plaque. Those are the soul of the build.</p>
+              </div>
+            </div>
+            <div class="step-visual">
+              <img src="assets/steps/02-gut.svg" alt="Diagram: keep speaker and motors, remove PCB" />
+            </div>
+          </div>
+        </section>
+
+        <section id="identify">
+          <span class="section-label">Stage 3</span>
+          <h2>Identify the motors</h2>
+          <p>
+            Classic Billy Bass units usually have <strong class="text-ink">two DC motors</strong>:
+            one for the mouth (sometimes combined with a head-turn linkage) and one for the tail flop.
+            Some generations add a third for body lean — if you have three, wire the third to a spare
+            L298N channel or a second driver; the stock firmware animates two channels.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Motor</th><th>What it moves</th><th>Firmware channel</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Mouth / head</td><td>Lips open/close; sometimes head turn</td><td>L298N A → GPIO16/17</td></tr>
+                <tr><td>Tail</td><td>Side-to-side flop</td><td>L298N B → GPIO4/5</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Test each motor with a 3–5 V bench supply briefly (correct polarity doesn’t matter yet).
+            Confirm free movement without binding against the plaque.
+          </p>
+        </section>
+
+        <section id="assemble">
+          <span class="section-label">Stage 4</span>
+          <h2>Mount the new stack</h2>
+          <div class="step">
+            <div class="step-body">
+              <span class="step-num">3</span>
+              <h3>Fit ESP32, driver, amp, and mic</h3>
+              <p>
+                If you printed a backplate, screw the L298N and ESP32 into the standoffs first.
+                Otherwise hot-glue or zip-tie modules to the rear cavity — keep USB accessible.
+              </p>
+              <p>
+                Place the <strong class="text-ink">INMP441 near the mouth opening</strong> or a drilled
+                grille so voice isn’t muffled by plastic. Point the mic port outward; keep it away
+                from the speaker to reduce feedback.
+              </p>
+              <p>
+                Mount the MAX98357A close to the speaker terminals. Route motor wires away from
+                I²S clock lines where you can.
+              </p>
+            </div>
+            <div class="step-visual">
+              <img src="assets/steps/03-install.svg" alt="Diagram: mount ESP32, L298N, amp, mic" />
+            </div>
+          </div>
+        </section>
+
+        <section id="wire">
+          <span class="section-label">Stage 5</span>
+          <h2>Wire everything</h2>
+          <p>
+            Follow the full pin maps on the <a href="wiring.html">wiring page</a>. Build in this order
+            so you can smoke-test as you go:
+          </p>
+          <ol style="color: var(--ink-muted); padding-left: 1.25rem">
+            <li style="margin-bottom: 0.5rem"><strong class="text-ink">Common ground</strong> — ESP32 GND, amp GND, L298N GND, mic GND.</li>
+            <li style="margin-bottom: 0.5rem"><strong class="text-ink">Mic I²S</strong> — GPIO8/9/10 + 3V3. L/R → GND.</li>
+            <li style="margin-bottom: 0.5rem"><strong class="text-ink">Amp I²S</strong> — GPIO11/12/13 + 5V. Speaker to amp outputs.</li>
+            <li style="margin-bottom: 0.5rem"><strong class="text-ink">Motors</strong> — IN1–IN4, ENA/ENB jumpers on, motor outs to M/T leads.</li>
+            <li style="margin-bottom: 0.5rem"><strong class="text-ink">Power</strong> — ESP32 via USB for bring-up; later a dedicated 5 V / motor supply.</li>
+          </ol>
+          <div class="diagram-panel">
+            <object type="image/svg+xml" data="assets/diagrams/system-overview.svg" aria-label="System overview"></object>
+          </div>
+          <div class="callout">
+            <h4>Continuity check</h4>
+            <p>Before applying motor voltage, beep-test that motor outs are not shorted to 5 V or GND, and that 3V3 is not connected to 5 V.</p>
+          </div>
+        </section>
+
+        <section id="flash">
+          <span class="section-label">Stage 6</span>
+          <h2>Flash the firmware</h2>
+          <div class="step">
+            <div class="step-body">
+              <span class="step-num">4</span>
+              <h3>Configure and program from the browser</h3>
+              <p>
+                Plug the ESP32-S3 into your PC with a data-capable USB-C cable. Open
+                <a href="flash.html">the flash page</a> in Chrome or Edge (Web Serial required).
+              </p>
+              <p>Enter:</p>
+              <ul style="color: var(--ink-muted)">
+                <li>Wi‑Fi SSID and password (2.4 GHz)</li>
+                <li>OpenAI API key</li>
+                <li>Optional personality / system prompt (“You are Billy, a sarcastic singing fish…”)</li>
+              </ul>
+              <p>
+                Click <strong class="text-ink">Connect</strong>, select the serial port, then
+                <strong class="text-ink">Flash</strong>. The site writes the application image and a
+                small config partition containing your secrets — they never leave your browser except
+                onto the device.
+              </p>
+            </div>
+            <div class="step-visual">
+              <img src="assets/steps/04-flash.svg" alt="Diagram: USB flash from browser" />
+            </div>
+          </div>
+          <div class="callout warn">
+            <h4>First boot</h4>
+            <p>
+              After reset, watch the serial log on the flash page (or any serial monitor at 115200).
+              You should see Wi‑Fi connect, then <code style="color:var(--teal-bright)">[billy] ready</code>.
+              If Wi‑Fi fails, re-flash with corrected credentials.
+            </p>
+          </div>
+        </section>
+
+        <section id="use">
+          <span class="section-label">Stage 7</span>
+          <h2>Talk to Billy</h2>
+          <p>Default interaction modes:</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Mode</th><th>How</th><th>What happens</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Push-to-talk</td>
+                  <td>Hold the button on GPIO14 (or send <code style="color:var(--teal-bright)">t</code> over serial)</td>
+                  <td>Records audio → Whisper STT → GPT → TTS → mouth sync</td>
+                </tr>
+                <tr>
+                  <td>Auto listen</td>
+                  <td>Enabled in config; voice activity detection</td>
+                  <td>Starts a turn when you speak above the energy threshold</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            While audio plays, the firmware measures RMS energy on the outbound PCM stream and
+            drives the mouth motor open on peaks, closed on silence. The tail gets occasional
+            flops so Billy doesn’t look frozen mid-sentence.
+          </p>
+          <p>
+            Close the shell once you’re happy. Strain-relieve the USB or power cable. Hang Billy
+            on the wall and try: <em>“What’s the weather vibe today?”</em>
+          </p>
+        </section>
+
+        <section id="troubleshoot">
+          <span class="section-label">Stage 8</span>
+          <h2>Troubleshooting</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>ESP resets when mouth moves</td>
+                  <td>Shared supply brownout</td>
+                  <td>Separate motor Vin; thicken ground; 1000 µF across motor supply</td>
+                </tr>
+                <tr>
+                  <td>No serial port in browser</td>
+                  <td>Charge-only cable / drivers</td>
+                  <td>Try another cable; install CP210x/CH340 if using UART bridge</td>
+                </tr>
+                <tr>
+                  <td>Wi‑Fi won’t join</td>
+                  <td>5 GHz-only network / typo</td>
+                  <td>Use 2.4 GHz SSID; re-flash config</td>
+                </tr>
+                <tr>
+                  <td>Silence from speaker</td>
+                  <td>Amp SD pin / gain / wiring</td>
+                  <td>Confirm DIN/BCLK/LRC; SD pulled high; speaker continuity</td>
+                </tr>
+                <tr>
+                  <td>Mic records nothing</td>
+                  <td>L/R floating or 5 V on VDD</td>
+                  <td>L/R→GND; VDD on 3V3 only; check GPIO8/9/10</td>
+                </tr>
+                <tr>
+                  <td>Mouth always open</td>
+                  <td>Motor polarity / stuck linkage</td>
+                  <td>Swap OUT1/OUT2; free the mechanism</td>
+                </tr>
+                <tr>
+                  <td>OpenAI 401 errors</td>
+                  <td>Bad API key</td>
+                  <td>Regenerate key; re-flash config partition</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="btn-group">
+            <a class="btn btn-primary" href="flash.html">Flash firmware</a>
+            <a class="btn btn-secondary" href="wiring.html">Wiring diagrams</a>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="wrap footer-inner">
+        <p>SomethingFishy — open hardware conversion guide.</p>
+        <div class="footer-links">
+          <a href="bom.html">Parts</a>
+          <a href="wiring.html">Wiring</a>
+          <a href="flash.html">Flash</a>
+        </div>
+      </div>
+    </footer>
+    <script src="js/main.js"></script>
+  </body>
+</html>

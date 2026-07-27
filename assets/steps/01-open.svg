@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 280" role="img">
+  <title>Step: Open the shell</title>
+  <rect width="400" height="280" fill="transparent"/>
+  <ellipse cx="200" cy="150" rx="130" ry="70" fill="#c45a3e" stroke="#e76f51" stroke-width="2"/>
+  <ellipse cx="120" cy="150" rx="45" ry="50" fill="#d46245"/>
+  <circle cx="105" cy="135" r="10" fill="#eef4f8"/><circle cx="107" cy="136" r="5" fill="#06101c"/>
+  <path d="M300 140 Q360 100 350 150 Q360 200 300 160 Z" fill="#a84832"/>
+  <!-- Screws highlighted -->
+  <circle cx="140" cy="100" r="8" fill="none" stroke="#3dbeb0" stroke-width="2"/>
+  <circle cx="260" cy="100" r="8" fill="none" stroke="#3dbeb0" stroke-width="2"/>
+  <circle cx="140" cy="200" r="8" fill="none" stroke="#3dbeb0" stroke-width="2"/>
+  <circle cx="260" cy="200" r="8" fill="none" stroke="#3dbeb0" stroke-width="2"/>
+  <text x="200" y="40" text-anchor="middle" fill="#a8e6df" font-family="Figtree,sans-serif" font-size="14" font-weight="600">Remove rear screws</text>
+  <path d="M140 90 L140 55" stroke="#3dbeb0" stroke-width="1.5" marker-end="url(#a)"/>
+</svg>

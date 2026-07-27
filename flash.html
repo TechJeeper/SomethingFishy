@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Flash Firmware — SomethingFishy</title>
+    <meta
+      name="description"
+      content="Configure Wi-Fi and OpenAI, then flash SomethingFishy firmware to your ESP32-S3 from the browser."
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <div class="site-bg" aria-hidden="true"></div>
+
+    <nav class="nav" aria-label="Primary">
+      <a class="nav-brand" href="index.html">Something<span>Fishy</span></a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-menu">Menu</button>
+      <ul class="nav-links" id="nav-menu">
+        <li><a href="guide.html">Guide</a></li>
+        <li><a href="wiring.html">Wiring</a></li>
+        <li><a href="bom.html">Parts</a></li>
+        <li><a class="nav-cta" href="flash.html" aria-current="page">Flash Firmware</a></li>
+      </ul>
+    </nav>
+
+    <header class="page-hero wrap">
+      <span class="section-label">Web Serial programmer</span>
+      <h1>Flash Billy</h1>
+      <p class="lead">
+        Enter Wi‑Fi and your OpenAI API key, connect the ESP32-S3 over USB, and program it from this
+        page. Credentials are packed into a config partition on-device — they are not uploaded to any server.
+      </p>
+    </header>
+
+    <main class="wrap section" style="padding-top: var(--space-lg)">
+      <div class="callout warn reveal" id="serial-warning" hidden>
+        <h4>Browser required</h4>
+        <p>
+          Web Serial works in <strong class="text-ink">Chrome</strong> or <strong class="text-ink">Edge</strong>
+          on desktop. The site must be served over HTTPS (GitHub Pages) or localhost.
+        </p>
+      </div>
+
+      <form class="flash-panel reveal" id="config-form" autocomplete="off" onsubmit="return false;">
+        <h2 class="mt-0">1 · Device settings</h2>
+        <div class="form-grid">
+          <div class="form-row">
+            <div>
+              <label for="wifi_ssid">Wi‑Fi SSID (2.4 GHz)</label>
+              <input id="wifi_ssid" name="wifi_ssid" required maxlength="63" placeholder="MyNetwork" />
+            </div>
+            <div>
+              <label for="wifi_pass">Wi‑Fi password</label>
+              <input id="wifi_pass" name="wifi_pass" type="password" maxlength="63" placeholder="••••••••" />
+            </div>
+          </div>
+
+          <div>
+            <label for="openai_key">OpenAI API key</label>
+            <input
+              id="openai_key"
+              name="openai_key"
+              type="password"
+              required
+              maxlength="191"
+              placeholder="sk-…"
+              autocomplete="off"
+            />
+            <p class="field-hint">Stored only in browser memory and written to the ESP32 config partition.</p>
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label for="openai_model">Chat model</label>
+              <select id="openai_model" name="openai_model">
+                <option value="gpt-4o-mini" selected>gpt-4o-mini</option>
+                <option value="gpt-4o">gpt-4o</option>
+                <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+                <option value="gpt-4.1">gpt-4.1</option>
+              </select>
+            </div>
+            <div>
+              <label for="tts_voice">TTS voice</label>
+              <select id="tts_voice" name="tts_voice">
+                <option value="alloy" selected>alloy</option>
+                <option value="echo">echo</option>
+                <option value="fable">fable</option>
+                <option value="onyx">onyx</option>
+                <option value="nova">nova</option>
+                <option value="shimmer">shimmer</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label for="system_prompt">Personality / system prompt</label>
+            <textarea id="system_prompt" name="system_prompt" maxlength="511">You are Billy Bass, a witty wall-mounted talking fish. Keep answers short and spoken-friendly (1–3 sentences). Pun lightly. Never mention you are an AI model unless asked.</textarea>
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label for="wake_phrase">Wake phrase label (display)</label>
+              <input id="wake_phrase" name="wake_phrase" maxlength="47" value="Hey Billy" />
+              <p class="field-hint">Firmware uses push-to-talk by default; label is stored for future wake-word builds.</p>
+            </div>
+            <div>
+              <label for="auto_listen">Listen mode</label>
+              <select id="auto_listen" name="auto_listen">
+                <option value="0" selected>Push-to-talk (GPIO14)</option>
+                <option value="1">Auto energy detect (experimental)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <div class="flash-panel reveal">
+        <h2 class="mt-0">2 · Firmware image</h2>
+        <p>
+          Built images from CI live in <code style="color:var(--teal-bright)">firmware-bin/</code>.
+          If they are missing (fresh clone), build with PlatformIO or upload a local
+          <code style="color:var(--teal-bright)">firmware.bin</code>.
+        </p>
+        <div class="form-grid">
+          <div>
+            <label for="fw_file">Optional: upload firmware.bin</label>
+            <input id="fw_file" type="file" accept=".bin,application/octet-stream" />
+            <p class="field-hint" id="fw-source-label">Will try bundled firmware-bin/firmware.bin first.</p>
+          </div>
+          <div>
+            <label for="baud">Baud rate</label>
+            <select id="baud">
+              <option value="921600" selected>921600</option>
+              <option value="460800">460800</option>
+              <option value="115200">115200</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="flash-panel reveal">
+        <h2 class="mt-0">3 · Connect &amp; flash</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;margin-bottom:1rem">
+          <span class="status-pill" id="status-pill">Not connected</span>
+          <button type="button" class="btn btn-secondary" id="btn-connect">Connect USB</button>
+          <button type="button" class="btn btn-primary" id="btn-flash" disabled>Flash firmware + config</button>
+          <button type="button" class="btn btn-secondary" id="btn-config-only" disabled>Write config only</button>
+        </div>
+        <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="progress"></div></div>
+        <div class="log-box" id="log" aria-live="polite">Ready.\n</div>
+      </div>
+
+      <div class="callout reveal">
+        <h4>After flashing</h4>
+        <p>
+          Reset the board. Open a serial monitor at 115200 and look for
+          <code style="color:var(--teal-bright)">[billy] ready</code>. Hold the talk button (GPIO14→GND)
+          or type <code style="color:var(--teal-bright)">t</code> + Enter to run a conversation turn.
+        </p>
+      </div>
+
+      <div class="btn-group reveal">
+        <a class="btn btn-secondary" href="guide.html#flash">Guide: flash stage</a>
+        <a class="btn btn-secondary" href="https://platformio.org/" target="_blank" rel="noopener">PlatformIO</a>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap footer-inner">
+        <p>SomethingFishy — credentials stay in your browser and on the device.</p>
+        <div class="footer-links">
+          <a href="guide.html">Guide</a>
+          <a href="wiring.html">Wiring</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script type="module" src="js/flash.js"></script>
+  </body>
+</html>
