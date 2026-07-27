@@ -55,15 +55,119 @@
   background: rgba(42, 157, 143, 0.12);
 }
 
-.wire-net-detail {
-  font-size: 0.9rem;
-  color: var(--ink-muted);
-  min-height: 1.4em;
-  margin: 0 0 var(--space-md);
+.wire-focus-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: var(--space-md);
+  align-items: start;
 }
 
-.wire-net-detail strong {
+@media (max-width: 900px) {
+  .wire-focus-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.wire-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 560px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(12, 33, 56, 0.55);
+}
+
+.wire-list li {
+  border-bottom: 1px solid var(--line);
+}
+
+.wire-list li:last-child {
+  border-bottom: none;
+}
+
+.wire-list li.is-active {
+  background: rgba(61, 190, 176, 0.14);
+}
+
+.wire-list-btn {
+  display: flex;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: none;
+  background: transparent;
   color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.wire-list-btn:hover {
+  background: rgba(61, 190, 176, 0.08);
+}
+
+.wire-list-swatch {
+  width: 8px;
+  height: 8px;
+  margin-top: 0.35rem;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.wire-list-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.35rem;
+  align-items: baseline;
+  font-size: 0.8rem;
+}
+
+.wire-list-body strong {
+  flex-basis: 100%;
+  font-size: 0.82rem;
+  color: var(--foam);
+}
+
+.wire-list-body code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.72rem;
+  color: var(--teal-bright);
+  background: rgba(42, 157, 143, 0.12);
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+}
+
+.wire-list-arrow {
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+}
+
+.wire-diagram .pin-dot.is-endpoint {
+  stroke: #a8e6df;
+  stroke-width: 2;
+  r: 6;
+}
+
+.wire-diagram .ep-ring {
+  pointer-events: none;
+}
+
+.wire-endpoint-card {
+  margin: 0 0 var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(12, 33, 56, 0.7);
+  font-size: 0.95rem;
+  color: var(--ink-muted);
+  min-height: 3.2rem;
+}
+
+.wire-endpoint-card code {
+  color: var(--teal-bright);
+  font-size: 0.85em;
 }
 
 /* Lab */

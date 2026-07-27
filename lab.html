@@ -8,9 +8,9 @@
       name="description"
       content="Interactive pin-accurate wiring simulator for the Billy Bass ESP32 conversion. Validate nets and simulate a talk turn."
     />
-    <link rel="stylesheet" href="css/styles.css?v=5" />
-    <link rel="stylesheet" href="css/lab.css?v=5" />
-    <link rel="icon" href="assets/icons/favicon.svg?v=5" type="image/svg+xml" />
+    <link rel="stylesheet" href="css/styles.css?v=6" />
+    <link rel="stylesheet" href="css/lab.css?v=6" />
+    <link rel="icon" href="assets/icons/favicon.svg?v=6" type="image/svg+xml" />
   </head>
   <body>
     <div class="site-bg" aria-hidden="true"></div>
@@ -38,18 +38,24 @@
 
     <main class="wrap section" style="padding-top: var(--space-lg)">
       <section class="reveal">
-        <h2>Interactive netlist map</h2>
-        <p>Hover or click a wire to inspect it. Filter by subsystem.</p>
+        <h2>Pin map — one wire at a time</h2>
+        <p>
+          Drawing every net at once is unreadable. Pick a connection from the list (or click a pin).
+          Only that wire is drawn, with labeled endpoints.
+        </p>
         <div class="wire-filters" id="wire-filters">
-          <button type="button" data-group="" class="is-active">All</button>
+          <button type="button" data-group="" class="is-active">All lists</button>
           <button type="button" data-group="mic">Mic I2S</button>
           <button type="button" data-group="amp">Amp / speaker</button>
           <button type="button" data-group="motor">Motors</button>
           <button type="button" data-group="power">Power / GND</button>
           <button type="button" data-group="ui">Button</button>
         </div>
-        <p class="wire-net-detail" id="wire-net-detail">Select a net to see details.</p>
-        <div class="wire-diagram-host" id="diagram-host"></div>
+        <div class="wire-endpoint-card" id="wire-net-detail"></div>
+        <div class="wire-focus-layout">
+          <div class="wire-diagram-host" id="diagram-host"></div>
+          <ul class="wire-list" id="wire-list" aria-label="Connections"></ul>
+        </div>
       </section>
 
       <section class="reveal" style="margin-top: var(--space-xl)">
@@ -82,17 +88,14 @@
       </div>
     </footer>
 
-    <script src="js/main.js?v=5"></script>
+    <script src="js/main.js?v=6"></script>
     <script type="module">
       import { mountWiringDiagram } from "./js/wiring-diagram.js";
       import { mountWiringLab } from "./js/wiring-sim.js";
-      import { REFERENCE_NETS } from "./js/netlist.js";
 
       const diagram = mountWiringDiagram(document.getElementById("diagram-host"), {
-        onSelectNet(id, net) {
-          document.getElementById("wire-net-detail").innerHTML =
-            `<strong>${net.name}</strong> · ${net.endpoints[0]} ↔ ${net.endpoints[1]} · group <code style="color:var(--teal-bright)">${net.group}</code>`;
-        },
+        listEl: document.getElementById("wire-list"),
+        detailEl: document.getElementById("wire-net-detail"),
       });
 
       const filters = document.getElementById("wire-filters");
@@ -101,13 +104,10 @@
         if (!btn) return;
         filters.querySelectorAll("button").forEach((b) => b.classList.remove("is-active"));
         btn.classList.add("is-active");
-        const g = btn.dataset.group;
-        if (!g) diagram.clear();
-        else diagram.highlightGroup(g);
+        diagram.highlightGroup(btn.dataset.group || "");
       });
 
       const lab = mountWiringLab(document.getElementById("lab-root"));
-      // Convenience: preload reference so first visit can validate immediately
       lab.loadReference();
     </script>
   </body>
