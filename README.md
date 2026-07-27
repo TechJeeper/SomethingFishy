@@ -4,9 +4,11 @@ Turn a **Big Mouth Billy Bass** into an ESP32-S3 AI talking fish — complete wi
 
 ## Live site
 
-After you push this repo and enable GitHub Pages (Settings → Pages → Deploy from branch `main` / root, or use the included Actions workflow), the site will be at:
+**https://techjeeper.github.io/SomethingFishy/**
 
-`https://<you>.github.io/SomethingFishy/`
+Deployed automatically by the [Deploy GitHub Pages](.github/workflows/pages.yml) workflow (builds firmware, then publishes the site).
+
+If the site 404s on first visit: repo **Settings → Pages → Build and deployment → Source: GitHub Actions**, then re-run the workflow.
 
 ## What's included
 
@@ -24,6 +26,8 @@ After you push this repo and enable GitHub Pages (Settings → Pages → Deploy 
 
 Follow **[Parts](bom.html)** then **[Guide](guide.html)** and **[Wiring](wiring.html)**.
 
+The recommended path **bypasses the stock microcontroller** — snip motor/speaker wires at the PCB and join with lever nuts (almost no soldering).
+
 Default pin map (ESP32-S3):
 
 - Mic INMP441: SD `8`, WS `9`, BCLK `10`, L/R→GND  
@@ -38,16 +42,7 @@ cd firmware
 pio run
 ```
 
-Copy artifacts into `firmware-bin/`:
-
-```bash
-# after pio run
-cp .pio/build/esp32-s3/firmware.bin ../firmware-bin/
-cp .pio/build/esp32-s3/bootloader.bin ../firmware-bin/
-cp .pio/build/esp32-s3/partitions.bin ../firmware-bin/
-```
-
-Or push to GitHub and let the **Build Firmware** Action publish them.
+Or push to GitHub and let the Pages / Build Firmware Actions produce `firmware-bin/`.
 
 ### 3. Flash from the website
 
