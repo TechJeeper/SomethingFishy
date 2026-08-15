@@ -120,7 +120,7 @@ bool openaiChat(const BillyConfig &cfg, const String &userText, String &replyOut
   return replyOut.length() > 0;
 }
 
-bool openaiTts(const BillyConfig &cfg, const String &text, std::vector<int16_t> &pcmOut,
+bool openaiTts(const BillyConfig &cfg, const String &text, PcmSink sink,
                String &errOut) {
   WiFiClientSecure client;
   client.setInsecure();
@@ -149,24 +149,58 @@ bool openaiTts(const BillyConfig &cfg, const String &text, std::vector<int16_t> 
     return false;
   }
 
+  // Stream straight through to the sink: a full clip would not fit in RAM.
   WiFiClient *stream = http.getStreamPtr();
-  pcmOut.clear();
-  const size_t bufSize = 2048;
+  const size_t bufSize = 1024;
   uint8_t buf[bufSize];
-  while (http.connected() || stream->available()) {
+  int16_t pcm[bufSize / 2];
+  size_t pcmCount = 0;
+  uint8_t carry = 0;
+  bool haveCarry = false;
+  size_t totalSamples = 0;
+  bool aborted = false;
+  uint32_t lastData = millis();
+
+  while (!aborted && (http.connected() || stream->available())) {
     size_t avail = stream->available();
     if (!avail) {
+      if (millis() - lastData > 15000) break;
       delay(1);
       continue;
     }
     size_t n = stream->readBytes(buf, min(avail, bufSize));
-    size_t samples = n / 2;
-    size_t old = pcmOut.size();
-    pcmOut.resize(old + samples);
-    memcpy(pcmOut.data() + old, buf, samples * 2);
+    if (!n) continue;
+    lastData = millis();
+
+    size_t i = 0;
+    if (haveCarry) {
+      pcm[pcmCount++] = (int16_t)((uint16_t)carry | ((uint16_t)buf[0] << 8));
+      haveCarry = false;
+      i = 1;
+    }
+    if ((n - i) & 1) {
+      carry = buf[n - 1];
+      haveCarry = true;
+      n -= 1;
+    }
+    for (; i + 1 < n; i += 2) {
+      pcm[pcmCount++] = (int16_t)((uint16_t)buf[i] | ((uint16_t)buf[i + 1] << 8));
+      if (pcmCount == sizeof(pcm) / sizeof(pcm[0])) {
+        if (!sink(pcm, pcmCount)) {
+          aborted = true;
+          break;
+        }
+        totalSamples += pcmCount;
+        pcmCount = 0;
+      }
+    }
+  }
+  if (!aborted && pcmCount) {
+    sink(pcm, pcmCount);
+    totalSamples += pcmCount;
   }
   http.end();
-  if (pcmOut.empty()) {
+  if (!totalSamples) {
     errOut = "empty pcm";
     return false;
   }

@@ -51,23 +51,30 @@ static bool listenForWakePhrase() {
 
 static void onLipLevel(float level) { motorsLipSync(level); }
 
+static bool ttsSink(const int16_t *samples, size_t count) {
+  return audioPlayWrite(samples, count, onLipLevel);
+}
+
 static void runConversationTurn() {
   Serial.println("[billy] listening…");
   mouthOpen();
   delay(60);
   mouthClose();
 
-  std::vector<int16_t> pcm;
-  if (!audioRecord(pcm, 8000, 1400)) {
-    Serial.println("[billy] no speech captured");
-    return;
-  }
-  Serial.printf("[billy] captured %u samples\n", (unsigned)pcm.size());
-
   std::vector<uint8_t> wav;
-  if (!audioMakeWav(pcm, wav)) {
-    Serial.println("[billy] wav build failed");
-    return;
+  {
+    // Scoped so the raw PCM is released before the upload buffer is allocated.
+    std::vector<int16_t> pcm;
+    if (!audioRecord(pcm, 6000, 1400)) {
+      Serial.println("[billy] no speech captured");
+      return;
+    }
+    Serial.printf("[billy] captured %u samples\n", (unsigned)pcm.size());
+
+    if (!audioMakeWav(pcm, wav)) {
+      Serial.println("[billy] wav build failed");
+      return;
+    }
   }
 
   String transcript, err;
@@ -84,14 +91,17 @@ static void runConversationTurn() {
   }
   Serial.printf("[billy] fish: %s\n", reply.c_str());
 
-  std::vector<int16_t> tts;
-  if (!openaiTts(gCfg, reply, tts, err)) {
+  if (!audioPlayBegin(TTS_SAMPLE_RATE)) {
+    Serial.println("[billy] speaker init failed — check I2S amp wiring");
+    return;
+  }
+  tailFlop();
+  bool spoke = openaiTts(gCfg, reply, ttsSink, err);
+  audioPlayEnd(onLipLevel);
+  if (!spoke) {
     Serial.printf("[billy] TTS failed: %s\n", err.c_str());
     return;
   }
-
-  tailFlop();
-  audioPlayPcm(tts.data(), tts.size(), TTS_SAMPLE_RATE, onLipLevel);
   mouthClose();
   motorsStop();
   Serial.println("[billy] turn done");
@@ -120,6 +130,8 @@ void setup() {
   delay(800);
   Serial.println();
   Serial.println("=== SomethingFishy / Billy ESP32 ===");
+  Serial.printf("[mem] heap=%u psram=%u\n", (unsigned)ESP.getFreeHeap(),
+                (unsigned)ESP.getPsramSize());
 
   pinMode(PIN_TALK_BTN, INPUT_PULLUP);
   motorsBegin();
@@ -191,7 +203,10 @@ void loop() {
   if (btn || serialTalk) {
     // debounce hold
     delay(40);
-    runConversationTurn();
+    if (digitalRead(PIN_TALK_BTN) == LOW || serialTalk) {
+      Serial.printf("[billy] talk trigger (%s)\n", btn ? "button GPIO14" : "serial t");
+      runConversationTurn();
+    }
     // wait for release
     while (digitalRead(PIN_TALK_BTN) == LOW) delay(20);
   } else if (gCfg.auto_listen && gCfg.wake_phrase[0]) {

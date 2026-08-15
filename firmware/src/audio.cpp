@@ -115,9 +115,10 @@ bool audioRecord(std::vector<int16_t> &out, uint32_t maxMs, uint32_t silenceTime
   return out.size() > SAMPLE_RATE_HZ / 5; // at least ~200ms
 }
 
-bool audioPlayPcm(const int16_t *data, size_t samples, uint32_t sampleRateHz,
-                  void (*onLevel)(float)) {
-  if (!installSpk(sampleRateHz)) return false;
+bool audioPlayBegin(uint32_t sampleRateHz) { return installSpk(sampleRateHz); }
+
+bool audioPlayWrite(const int16_t *data, size_t samples, void (*onLevel)(float)) {
+  if (!spkReady || !samples) return false;
   const size_t chunk = 256;
   size_t written = 0;
   for (size_t i = 0; i < samples; i += chunk) {
@@ -134,12 +135,17 @@ bool audioPlayPcm(const int16_t *data, size_t samples, uint32_t sampleRateHz,
     i2s_write(I2S_SPK_PORT, data + i, n * sizeof(int16_t), &bw, portMAX_DELAY);
     written += bw;
   }
-  // brief silence to flush
-  int16_t z[128] = {0};
-  size_t bw = 0;
-  i2s_write(I2S_SPK_PORT, z, sizeof(z), &bw, portMAX_DELAY);
-  if (onLevel) onLevel(0);
   return written > 0;
+}
+
+void audioPlayEnd(void (*onLevel)(float)) {
+  if (spkReady) {
+    // brief silence so the amp doesn't latch on the last sample
+    int16_t z[128] = {0};
+    size_t bw = 0;
+    i2s_write(I2S_SPK_PORT, z, sizeof(z), &bw, portMAX_DELAY);
+  }
+  if (onLevel) onLevel(0);
 }
 
 bool audioMakeWav(const std::vector<int16_t> &pcm, std::vector<uint8_t> &wavOut) {
