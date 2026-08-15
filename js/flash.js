@@ -424,10 +424,12 @@ async function loadFlashPlan() {
 }
 
 async function getEspTool() {
+  // Prefer the vendored bundle (stubs unwrapped for .default JSON modules).
+  // Avoid esm.sh / unpkg lib entrypoints — dynamic stub JSON imports come back as
+  // `{ default: {...} }`, so text/data are undefined and atob() throws during stub upload.
   const sources = [
-    "https://unpkg.com/esptool-js@0.5.5/bundle.js?module",
-    "https://esm.sh/esptool-js@0.5.5",
-    "https://unpkg.com/esptool-js@0.5.5/lib/index.js",
+    new URL("./vendor/esptool-js.bundle.js", import.meta.url).href,
+    "https://unpkg.com/esptool-js@0.5.5/bundle.js",
   ];
   let lastErr = null;
   for (let i = 0; i < sources.length; i++) {
