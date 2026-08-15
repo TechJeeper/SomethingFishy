@@ -32,6 +32,8 @@ const DEFAULT_VOICES = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"];
 const OPENAI_VOICE_ENDPOINTS = ["https://api.openai.com/v1/audio/voices", "https://api.openai.com/v1/voices"];
 const VOICE_PREVIEW_MODEL = "tts-1";
 const VOICE_PREVIEW_TEXT = "Hey there — I am Billy Bass, and this is my voice preview.";
+const NETWORK_ERROR_MESSAGE =
+  "Network request failed — check your internet connection and that the page is served over HTTPS or localhost.";
 
 let validatedApiKey = "";
 let apiKeyValidationState = "idle";
@@ -208,10 +210,15 @@ async function openAiFetchJson(url, apiKey, init = {}) {
     Authorization: "Bearer " + apiKey,
     ...(init.headers || {}),
   };
-  const res = await fetch(url, {
-    ...init,
-    headers,
-  });
+  let res;
+  try {
+    res = await fetch(url, {
+      ...init,
+      headers,
+    });
+  } catch (networkErr) {
+    throw new Error(NETWORK_ERROR_MESSAGE);
+  }
   if (!res.ok) {
     const detail = await parseOpenAiError(res);
     const err = new Error(detail || `${res.status} ${res.statusText}`);
@@ -330,16 +337,21 @@ async function previewSelectedVoice() {
       Authorization: "Bearer " + validatedApiKey,
       "Content-Type": "application/json",
     };
-    const res = await fetch("https://api.openai.com/v1/audio/speech", {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        model: VOICE_PREVIEW_MODEL,
-        voice: ttsVoiceEl.value,
-        input: VOICE_PREVIEW_TEXT,
-        response_format: "mp3",
-      }),
-    });
+    let res;
+    try {
+      res = await fetch("https://api.openai.com/v1/audio/speech", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          model: VOICE_PREVIEW_MODEL,
+          voice: ttsVoiceEl.value,
+          input: VOICE_PREVIEW_TEXT,
+          response_format: "mp3",
+        }),
+      });
+    } catch (networkErr) {
+      throw new Error(NETWORK_ERROR_MESSAGE);
+    }
     if (!res.ok) {
       throw new Error(await parseOpenAiError(res));
     }
