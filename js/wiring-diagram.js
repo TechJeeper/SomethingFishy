@@ -24,6 +24,7 @@ const LAYOUT = {
  * @param {(net: object|null)=>void} [opts.onSelectNet]
  */
 export function mountWiringDiagram(host, opts = {}) {
+  const moduleById = new Map(MODULES.map((mod) => [mod.id, mod]));
   const pinPos = new Map();
   const vbW = 760;
   const vbH = 620;
@@ -45,6 +46,57 @@ export function mountWiringDiagram(host, opts = {}) {
   }
 
   const ns = "http://www.w3.org/2000/svg";
+
+  function endpointMeta(ep) {
+    const [moduleId, pinId] = String(ep || "").split(".");
+    const mod = moduleById.get(moduleId);
+    const pin = mod?.pins.find((p) => p.id === pinId);
+    return {
+      ep,
+      moduleId,
+      pinId,
+      moduleName: mod?.name || moduleId || ep,
+      pinLabel: pin?.label || pinId || ep,
+      fullLabel: mod ? `${mod.name} · ${pin?.label || pinId}` : ep,
+    };
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, (ch) => (
+      {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      }[ch]
+    ));
+  }
+
+  function filteredNets() {
+    return REFERENCE_NETS.filter((net) => {
+      if (activeGroup && net.group !== activeGroup) return false;
+      if (activePin && !net.endpoints.includes(activePin)) return false;
+      return true;
+    });
+  }
+
+  function currentNet() {
+    const nets = filteredNets();
+    return nets.find((net) => net.id === activeNetId) || nets[0] || null;
+  }
+
+  function refreshSelection() {
+    const nets = filteredNets();
+    if (!nets.length) {
+      activeNetId = null;
+      return { nets, net: null };
+    }
+    if (!nets.some((net) => net.id === activeNetId)) {
+      activeNetId = nets[0].id;
+    }
+    return { nets, net: nets.find((item) => item.id === activeNetId) || nets[0] };
+  }
 
   function drawModules() {
     svg.innerHTML = "";
@@ -152,17 +204,6 @@ export function mountWiringDiagram(host, opts = {}) {
     }
   }
 
-  function netsForView() {
-    if (activeNetId) return REFERENCE_NETS.filter((n) => n.id === activeNetId);
-    if (activePin) {
-      return REFERENCE_NETS.filter(
-        (n) => n.endpoints[0] === activePin || n.endpoints[1] === activePin
-      );
-    }
-    if (activeGroup) return REFERENCE_NETS.filter((n) => n.group === activeGroup);
-    return []; // nothing until selection — clarity first
-  }
-
   function drawEndpointBadge(g, ep, color) {
     const p = pinPos.get(ep);
     if (!p) return;
@@ -179,7 +220,6 @@ export function mountWiringDiagram(host, opts = {}) {
     // Outside label callout
     const outward = p.side === "left" ? p.x - 8 : p.x + 8;
     const anchor = p.side === "left" ? "end" : "start";
-    const bgX = p.side === "left" ? outward - 4 : outward - 2;
     const text = `${p.module} · ${p.label}`;
     const label = document.createElementNS(ns, "text");
     label.setAttribute("x", String(outward));
@@ -198,10 +238,10 @@ export function mountWiringDiagram(host, opts = {}) {
     if (!gWires) return;
     gWires.innerHTML = "";
 
-    const nets = netsForView();
+    const net = currentNet();
 
     // Dim hint when nothing selected
-    if (!nets.length) {
+    if (!net) {
       const hint = document.createElementNS(ns, "text");
       hint.setAttribute("x", String(vbW / 2));
       hint.setAttribute("y", "30");
@@ -209,139 +249,142 @@ export function mountWiringDiagram(host, opts = {}) {
       hint.setAttribute("fill", "#9bb0c4");
       hint.setAttribute("font-size", "13");
       hint.setAttribute("font-family", "Figtree,sans-serif");
-      hint.textContent = "Click a pin or pick a connection below — one wire at a time";
+      hint.textContent = activePin || activeGroup
+        ? "No matching connection in this filter"
+        : "Click a pin or pick a connection below — one wire at a time";
       gWires.appendChild(hint);
       return;
     }
 
-    nets.forEach((net, i) => {
-      const [a, b] = net.endpoints;
-      const pa = pinPos.get(a);
-      const pb = pinPos.get(b);
-      if (!pa || !pb) return;
+    const [a, b] = net.endpoints;
+    const pa = pinPos.get(a);
+    const pb = pinPos.get(b);
+    if (!pa || !pb) return;
 
-      const path = document.createElementNS(ns, "path");
-      path.setAttribute("d", orthogonalPath(pa, pb, laneOffset(net.id, i)));
-      path.setAttribute("fill", "none");
-      path.setAttribute("stroke", net.color);
-      path.setAttribute("stroke-width", "3");
-      path.setAttribute("stroke-linejoin", "round");
-      path.setAttribute("stroke-linecap", "round");
-      path.classList.add("net-wire", "is-hot");
-      gWires.appendChild(path);
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute("d", orthogonalPath(pa, pb, laneOffset(net.id, 0)));
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", net.color);
+    path.setAttribute("stroke-width", "3");
+    path.setAttribute("stroke-linejoin", "round");
+    path.setAttribute("stroke-linecap", "round");
+    path.classList.add("net-wire", "is-hot");
+    gWires.appendChild(path);
 
-      drawEndpointBadge(gWires, a, net.color);
-      drawEndpointBadge(gWires, b, net.color);
+    drawEndpointBadge(gWires, a, net.color);
+    drawEndpointBadge(gWires, b, net.color);
 
-      // Mid-wire caption
-      const midX = (pa.x + pb.x) / 2;
-      const midY = (pa.y + pb.y) / 2 - 8;
-      const cap = document.createElementNS(ns, "text");
-      cap.setAttribute("x", String(midX));
-      cap.setAttribute("y", String(midY));
-      cap.setAttribute("text-anchor", "middle");
-      cap.setAttribute("fill", "#eef4f8");
-      cap.setAttribute("font-size", "12");
-      cap.setAttribute("font-weight", "700");
-      cap.setAttribute("font-family", "Figtree,sans-serif");
-      cap.textContent = net.name;
-      gWires.appendChild(cap);
-    });
+    const midX = (pa.x + pb.x) / 2;
+    const midY = (pa.y + pb.y) / 2 - 8;
+    const cap = document.createElementNS(ns, "text");
+    cap.setAttribute("x", String(midX));
+    cap.setAttribute("y", String(midY));
+    cap.setAttribute("text-anchor", "middle");
+    cap.setAttribute("fill", "#eef4f8");
+    cap.setAttribute("font-size", "12");
+    cap.setAttribute("font-weight", "700");
+    cap.setAttribute("font-family", "Figtree,sans-serif");
+    cap.textContent = net.name;
+    gWires.appendChild(cap);
 
     // Mark active pin dots
     svg.querySelectorAll(".pin-dot").forEach((dot) => {
       const ep = dot.dataset.ep;
-      const on = nets.some((n) => n.endpoints.includes(ep));
+      const on = net.endpoints.includes(ep) || ep === activePin;
       dot.classList.toggle("is-endpoint", on);
       dot.setAttribute("r", on ? "7" : "5");
     });
   }
 
-  function updateDetail(nets) {
+  function updateDetail(nets, net) {
     if (!opts.detailEl) return;
-    if (!nets.length) {
-      opts.detailEl.innerHTML =
-        "Pick a <strong>connection</strong> in the list, or click a <strong>pin</strong> on a module.";
+    if (!net) {
+      opts.detailEl.innerHTML = activePin
+        ? `No connections found for <code>${escapeHtml(endpointMeta(activePin).fullLabel)}</code>.`
+        : activeGroup
+          ? `No connections found in the <strong>${escapeHtml(activeGroup)}</strong> filter.`
+          : "Pick a <strong>connection</strong> in the list, or click a <strong>pin</strong> on a module.";
       return;
     }
-    opts.detailEl.innerHTML = nets
-      .map(
-        (n) =>
-          `<strong>${n.name}</strong><br><code>${n.endpoints[0]}</code> ↔ <code>${n.endpoints[1]}</code>`
-      )
-      .join("<hr style='border:none;border-top:1px solid var(--line);margin:0.5rem 0'>");
+    const from = endpointMeta(net.endpoints[0]);
+    const to = endpointMeta(net.endpoints[1]);
+    const activeMeta = activePin === net.endpoints[0] ? from : activePin === net.endpoints[1] ? to : null;
+    const scope = activePin
+      ? `<span class="wire-trace-kicker">Tracing from <code>${escapeHtml(activeMeta?.fullLabel || endpointMeta(activePin).fullLabel)}</code> · ${nets.length} match${nets.length === 1 ? "" : "es"}</span>`
+      : activeGroup
+        ? `<span class="wire-trace-kicker">${escapeHtml(net.group.toUpperCase())} connection · ${nets.length} in this filter</span>`
+        : `<span class="wire-trace-kicker">Trace this wire</span>`;
+    opts.detailEl.innerHTML = `
+      <div class="wire-trace-card">
+        ${scope}
+        <strong>${escapeHtml(net.name)}</strong>
+        <div class="wire-trace-route">
+          <div class="wire-trace-end">
+            <span>From</span>
+            <b>${escapeHtml(from.moduleName)}</b>
+            <code>${escapeHtml(from.pinLabel)}</code>
+          </div>
+          <span class="wire-trace-arrow" aria-hidden="true">→</span>
+          <div class="wire-trace-end">
+            <span>To</span>
+            <b>${escapeHtml(to.moduleName)}</b>
+            <code>${escapeHtml(to.pinLabel)}</code>
+          </div>
+        </div>
+        <p>Start at <code>${escapeHtml(from.fullLabel)}</code> and land the other end on <code>${escapeHtml(to.fullLabel)}</code>.</p>
+      </div>`;
   }
 
   function syncList() {
     if (!opts.listEl) return;
+    const visible = new Set(filteredNets().map((net) => net.id));
     opts.listEl.querySelectorAll("[data-net]").forEach((el) => {
+      el.hidden = !visible.has(el.dataset.net);
       el.classList.toggle("is-active", el.dataset.net === activeNetId);
     });
   }
 
   function selectNet(netId) {
-    activeNetId = netId;
-    activeGroup = null;
-    activePin = null;
     const net = REFERENCE_NETS.find((n) => n.id === netId) || null;
-    const nets = net ? [net] : [];
+    if (!net) return;
+    if (!filteredNets().some((item) => item.id === netId)) {
+      activePin = null;
+      activeGroup = null;
+    }
+    activeNetId = netId;
+    const { nets, net: current } = refreshSelection();
     drawWires();
-    updateDetail(nets);
+    updateDetail(nets, current);
     syncList();
-    opts.onSelectNet?.(net);
+    opts.onSelectNet?.(current);
   }
 
   function selectPin(ep) {
     activePin = ep;
-    activeNetId = null;
     activeGroup = null;
-    const nets = netsForView();
+    const { nets, net } = refreshSelection();
     drawWires();
-    updateDetail(nets);
+    updateDetail(nets, net);
     syncList();
-    opts.onSelectNet?.(nets[0] || null);
+    opts.onSelectNet?.(net);
   }
 
   function selectGroup(group) {
     activeGroup = group || null;
-    activeNetId = null;
     activePin = null;
-    const nets = netsForView();
+    const { nets, net } = refreshSelection();
     drawWires();
-    updateDetail(
-      nets.length
-        ? [{ name: `${nets.length} nets in “${group}” — pick one from the list for a single wire`, endpoints: ["", ""] }]
-        : []
-    );
-    // For groups, still draw but user asked for clarity — limit group draw to list selection only
-    if (group) {
-      // show group in list filter only; don't draw all group wires
-      activeGroup = null;
-      if (opts.listEl) {
-        opts.listEl.querySelectorAll("[data-net]").forEach((el) => {
-          const net = REFERENCE_NETS.find((n) => n.id === el.dataset.net);
-          el.hidden = Boolean(group && net && net.group !== group);
-        });
-      }
-      drawWires();
-      updateDetail([]);
-      if (opts.detailEl) {
-        opts.detailEl.innerHTML = `Filtered to <strong>${group}</strong>. Click a connection in the list.`;
-      }
-    } else if (opts.listEl) {
-      opts.listEl.querySelectorAll("[data-net]").forEach((el) => {
-        el.hidden = false;
-      });
-      drawWires();
-      updateDetail([]);
-    }
+    updateDetail(nets, net);
     syncList();
+    opts.onSelectNet?.(net);
   }
 
   function buildList() {
     if (!opts.listEl) return;
     opts.listEl.innerHTML = "";
     for (const net of REFERENCE_NETS) {
+      const from = endpointMeta(net.endpoints[0]);
+      const to = endpointMeta(net.endpoints[1]);
       const li = document.createElement("li");
       li.dataset.net = net.id;
       li.dataset.group = net.group;
@@ -349,10 +392,20 @@ export function mountWiringDiagram(host, opts = {}) {
         <button type="button" class="wire-list-btn">
           <span class="wire-list-swatch" style="background:${net.color}"></span>
           <span class="wire-list-body">
-            <strong>${net.name}</strong>
-            <code>${net.endpoints[0]}</code>
-            <span class="wire-list-arrow">→</span>
-            <code>${net.endpoints[1]}</code>
+            <strong>${escapeHtml(net.name)}</strong>
+            <span class="wire-list-route">
+              <span class="wire-list-end">
+                <small>From</small>
+                <span>${escapeHtml(from.moduleName)}</span>
+                <code>${escapeHtml(from.pinLabel)}</code>
+              </span>
+              <span class="wire-list-arrow">→</span>
+              <span class="wire-list-end">
+                <small>To</small>
+                <span>${escapeHtml(to.moduleName)}</span>
+                <code>${escapeHtml(to.pinLabel)}</code>
+              </span>
+            </span>
           </span>
         </button>`;
       li.querySelector("button").addEventListener("click", () => selectNet(net.id));
@@ -363,7 +416,7 @@ export function mountWiringDiagram(host, opts = {}) {
   drawModules();
   buildList();
   drawWires();
-  updateDetail([]);
+  updateDetail([], null);
 
   // Select first mic net as a friendly default so the page isn't empty
   const first = REFERENCE_NETS.find((n) => n.id === "mic_sd") || REFERENCE_NETS[0];
@@ -374,11 +427,11 @@ export function mountWiringDiagram(host, opts = {}) {
     selectPin,
     selectGroup,
     clear() {
-      selectGroup("");
-      activeNetId = null;
+      activeGroup = null;
       activePin = null;
+      activeNetId = null;
       drawWires();
-      updateDetail([]);
+      updateDetail([], null);
       syncList();
     },
     highlightGroup(group) {
