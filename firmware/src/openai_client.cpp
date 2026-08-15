@@ -98,6 +98,8 @@ bool openaiChat(const BillyConfig &cfg, const String &userText, String &replyOut
   user["role"] = "user";
   user["content"] = userText;
   doc["temperature"] = 0.8;
+  // Cap to ~1-3 spoken sentences; limits TTS audio size and ESP32 RAM pressure.
+  doc["max_tokens"] = 80;
 
   String payload;
   serializeJson(doc, payload);

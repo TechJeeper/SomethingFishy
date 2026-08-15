@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <vector>
+#include <cstring>
 
 #include "pins.h"
 #include "config_store.h"
@@ -10,6 +11,43 @@
 
 static BillyConfig gCfg;
 static bool gReady = false;
+
+// Returns true if 'phrase' appears in 'text' (case-insensitive ASCII).
+static bool containsWakePhrase(const String &text, const char *phrase) {
+  if (!phrase || phrase[0] == '\0') return false;
+  String lower = text;
+  lower.toLowerCase();
+  String lowerPhrase = String(phrase);
+  lowerPhrase.toLowerCase();
+  return lower.indexOf(lowerPhrase) >= 0;
+}
+
+// Record a short clip and return true if the wake phrase was heard.
+static bool listenForWakePhrase() {
+  std::vector<int16_t> pcm;
+  // Short window: up to 2 s, stop after 600 ms of silence
+  if (!audioRecord(pcm, 2000, 600)) return false;
+
+  // Local energy gate: skip the API call if the recording is too quiet.
+  // This avoids burning Whisper quota on silence/ambient noise.
+  double energy = 0;
+  for (int16_t s : pcm) energy += (double)s * (double)s;
+  float rms = sqrtf((float)(energy / pcm.size())) / 32768.0f;
+  if (rms < 0.02f) return false;
+
+  std::vector<uint8_t> wav;
+  if (!audioMakeWav(pcm, wav)) return false;
+
+  String transcript, err;
+  if (!openaiTranscribe(gCfg, wav, transcript, err)) {
+    Serial.printf("[billy] wake-listen STT: %s\n", err.c_str());
+    return false;
+  }
+  if (transcript.length() == 0) return false;
+
+  Serial.printf("[billy] wake-listen heard: %s\n", transcript.c_str());
+  return containsWakePhrase(transcript, gCfg.wake_phrase);
+}
 
 static void onLipLevel(float level) { motorsLipSync(level); }
 
@@ -111,7 +149,11 @@ void setup() {
   }
 
   gReady = true;
-  Serial.println("[billy] ready — hold talk button or send 't' over serial");
+  if (gCfg.auto_listen && gCfg.wake_phrase[0]) {
+    Serial.printf("[billy] ready — listening for wake phrase \"%s\"\n", gCfg.wake_phrase);
+  } else {
+    Serial.println("[billy] ready — hold talk button or send 't' over serial");
+  }
   tailFlop();
 }
 
@@ -152,7 +194,15 @@ void loop() {
     runConversationTurn();
     // wait for release
     while (digitalRead(PIN_TALK_BTN) == LOW) delay(20);
+  } else if (gCfg.auto_listen && gCfg.wake_phrase[0]) {
+    // Wake-word mode: continuously listen for the configured phrase,
+    // then hand off to a full conversation turn.
+    if (listenForWakePhrase()) {
+      Serial.println("[billy] wake phrase detected!");
+      tailFlop();
+      runConversationTurn();
+    }
+  } else {
+    delay(10);
   }
-
-  delay(10);
 }
