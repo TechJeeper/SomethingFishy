@@ -77,6 +77,8 @@ function setVoiceStatus(text, state) {
 function resetVoicePreview() {
   voicePreviewEl.pause();
   voicePreviewEl.hidden = true;
+  voicePreviewEl.onended = null;
+  voicePreviewEl.onerror = null;
   voicePreviewEl.removeAttribute("src");
   voicePreviewEl.load();
   if (currentVoicePreviewUrl) {
@@ -267,7 +269,7 @@ async function fetchAvailableVoices(apiKey) {
       const voices = extractVoiceIds(payload);
       if (voices.length) return { voices, source: "api" };
     } catch (err) {
-      if (err?.status === 401) throw err;
+      if (err?.status === 401 || err?.status === 429) throw err;
       if (err?.status === 404 || err?.status === 405) continue;
       lastError = err;
     }
@@ -349,6 +351,8 @@ async function previewSelectedVoice() {
     currentVoicePreviewUrl = URL.createObjectURL(audioBlob);
     voicePreviewEl.src = currentVoicePreviewUrl;
     voicePreviewEl.hidden = false;
+    voicePreviewEl.onended = () => setVoiceStatus(`Finished previewing ${ttsVoiceEl.value}.`, "ok");
+    voicePreviewEl.onerror = () => setVoiceStatus(`Preview playback failed for ${ttsVoiceEl.value}.`, "err");
     await voicePreviewEl.play();
     setVoiceStatus(`Playing ${ttsVoiceEl.value}.`, "ok");
   } catch (err) {
@@ -582,7 +586,9 @@ btnValidateKey.addEventListener("click", async () => {
 });
 btnPreviewVoice.addEventListener("click", () => previewSelectedVoice());
 openAiKeyEl.addEventListener("input", () => {
-  if (openAiKeyEl.value.trim() !== validatedApiKey || apiKeyValidationState !== "valid") {
+  const currentKey = openAiKeyEl.value.trim();
+  if (currentKey === validatedApiKey && apiKeyValidationState === "valid") return;
+  if (apiKeyValidationState !== "idle") {
     markApiKeyDirty();
   }
 });
