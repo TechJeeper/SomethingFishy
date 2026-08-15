@@ -117,22 +117,29 @@ bool audioRecord(std::vector<int16_t> &out, uint32_t maxMs, uint32_t silenceTime
 
 bool audioPlayBegin(uint32_t sampleRateHz) { return installSpk(sampleRateHz); }
 
-bool audioPlayWrite(const int16_t *data, size_t samples, void (*onLevel)(float)) {
+bool audioPlayWrite(const int16_t *data, size_t samples, void (*onLevel)(float),
+                    int volumePercent) {
   if (!spkReady || !samples) return false;
+  if (volumePercent < 1) volumePercent = 1;
+  if (volumePercent > 100) volumePercent = 100;
   const size_t chunk = 256;
+  int16_t scaled[256];
   size_t written = 0;
   for (size_t i = 0; i < samples; i += chunk) {
     size_t n = min(chunk, samples - i);
+    for (size_t j = 0; j < n; j++) {
+      scaled[j] = (int16_t)(((int32_t)data[i + j] * volumePercent) / 100);
+    }
     if (onLevel) {
       double e = 0;
       for (size_t j = 0; j < n; j++) {
-        float v = data[i + j] / 32768.0f;
+        float v = scaled[j] / 32768.0f;
         e += v * v;
       }
       onLevel(sqrtf((float)(e / n)));
     }
     size_t bw = 0;
-    i2s_write(I2S_SPK_PORT, data + i, n * sizeof(int16_t), &bw, portMAX_DELAY);
+    i2s_write(I2S_SPK_PORT, scaled, n * sizeof(int16_t), &bw, portMAX_DELAY);
     written += bw;
   }
   return written > 0;

@@ -20,7 +20,9 @@ struct __attribute__((packed)) BillyConfig {
   char system_prompt[512];
   char wake_phrase[48];
   uint8_t auto_listen;
-  uint8_t reserved[3];
+  // 1–100 percent digital gain before the MAX98357A. 0 = default (70).
+  uint8_t speaker_volume;
+  uint8_t reserved[2];
   uint32_t crc32;
 };
 

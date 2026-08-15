@@ -94,9 +94,10 @@ bool configLoad(BillyConfig &out) {
 }
 
 void configPrintSummary(const BillyConfig &cfg) {
-  Serial.printf("[cfg] ssid=%s model=%s voice=%s auto=%u\n", cfg.wifi_ssid,
+  const unsigned vol = cfg.speaker_volume ? cfg.speaker_volume : 70;
+  Serial.printf("[cfg] ssid=%s model=%s voice=%s auto=%u vol=%u%%\n", cfg.wifi_ssid,
                 cfg.openai_model[0] ? cfg.openai_model : "(default)",
-                cfg.tts_voice[0] ? cfg.tts_voice : "(default)", cfg.auto_listen);
+                cfg.tts_voice[0] ? cfg.tts_voice : "(default)", cfg.auto_listen, vol);
   Serial.printf("[cfg] key=%s…%s\n",
                 cfg.openai_key[0] ? "***" : "(missing)",
                 cfg.openai_key[0] ? "ok" : "");

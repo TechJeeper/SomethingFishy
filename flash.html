@@ -127,6 +127,21 @@
                 <option value="1">Auto energy detect (experimental)</option>
               </select>
             </div>
+            <div>
+              <label for="speaker_volume">Speaker volume (<span id="speaker_volume_label">70</span>%)</label>
+              <input
+                id="speaker_volume"
+                name="speaker_volume"
+                type="range"
+                min="10"
+                max="100"
+                step="5"
+                value="70"
+              />
+              <p class="field-hint">
+                Digital gain before the MAX98357A. Start around 70%; lower if speech buzzes or clips on USB power.
+              </p>
+            </div>
           </div>
         </div>
       </form>

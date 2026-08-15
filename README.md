@@ -55,11 +55,13 @@ The page writes the app image and a `billycfg` partition containing your setting
 
 ### 4. Talk
 
-Serial monitor at `115200`. Look for `[billy] ready`. Hold the talk button or send `t`.
+Serial monitor at `115200` on the **USB‑UART** port (CH343/CP210x), not the native USB CDC port. Look for `[billy] ready`. Hold the talk button or send `t`.
+
+Speaker volume is set on the flash page (default **70%**). Lower it if speech buzzes or clips on USB power.
 
 ## Config partition
 
-Layout matches `firmware/include/config_store.h` (`BillyConfig`, magic `0xF15C0001`) at flash offset `0x300000` (see `firmware/partitions.csv`).
+Layout matches `firmware/include/config_store.h` (`BillyConfig`, magic `0xF15C0001`) at flash offset `0x300000` (see `firmware/partitions.csv`). `speaker_volume` uses a former reserved byte (1–100; `0` = firmware default 70), so older configs still load.
 
 ## License
 

@@ -120,6 +120,73 @@ bool openaiChat(const BillyConfig &cfg, const String &userText, String &replyOut
   return replyOut.length() > 0;
 }
 
+namespace {
+// OpenAI streams the speech body with chunked transfer encoding. Reading the
+// raw socket would splice chunk-length headers into the audio and shift every
+// sample boundary, so the bytes must come through HTTPClient's de-chunker.
+class PcmStreamSink : public Stream {
+ public:
+  explicit PcmStreamSink(PcmSink sink) : sink_(sink) {}
+
+  size_t write(uint8_t b) override { return write(&b, 1); }
+
+  size_t write(const uint8_t *buffer, size_t size) override {
+    const size_t consumed = size;
+    while (size && !aborted_) {
+      if (haveCarry_) {
+        pcm_[count_++] =
+            (int16_t)((uint16_t)carry_ | ((uint16_t)buffer[0] << 8));
+        haveCarry_ = false;
+        buffer += 1;
+        size -= 1;
+      } else if (size >= 2) {
+        pcm_[count_++] =
+            (int16_t)((uint16_t)buffer[0] | ((uint16_t)buffer[1] << 8));
+        buffer += 2;
+        size -= 2;
+      } else {
+        carry_ = buffer[0];
+        haveCarry_ = true;
+        buffer += 1;
+        size -= 1;
+      }
+      if (count_ == kBlock) flushBlock();
+    }
+    return consumed;
+  }
+
+  bool finish() {
+    if (count_ && !aborted_) flushBlock();
+    return !aborted_ && total_ > 0;
+  }
+
+  int available() override { return 0; }
+  int read() override { return -1; }
+  int peek() override { return -1; }
+  void flush() override {}
+
+ private:
+  static const size_t kBlock = 256;
+
+  void flushBlock() {
+    if (sink_(pcm_, count_)) {
+      total_ += count_;
+    } else {
+      aborted_ = true;
+    }
+    count_ = 0;
+  }
+
+  PcmSink sink_;
+  int16_t pcm_[kBlock];
+  size_t count_ = 0;
+  size_t total_ = 0;
+  uint8_t carry_ = 0;
+  bool haveCarry_ = false;
+  bool aborted_ = false;
+};
+}  // namespace
+
 bool openaiTts(const BillyConfig &cfg, const String &text, PcmSink sink,
                String &errOut) {
   WiFiClientSecure client;
@@ -149,58 +216,18 @@ bool openaiTts(const BillyConfig &cfg, const String &text, PcmSink sink,
     return false;
   }
 
-  // Stream straight through to the sink: a full clip would not fit in RAM.
-  WiFiClient *stream = http.getStreamPtr();
-  const size_t bufSize = 1024;
-  uint8_t buf[bufSize];
-  int16_t pcm[bufSize / 2];
-  size_t pcmCount = 0;
-  uint8_t carry = 0;
-  bool haveCarry = false;
-  size_t totalSamples = 0;
-  bool aborted = false;
-  uint32_t lastData = millis();
-
-  while (!aborted && (http.connected() || stream->available())) {
-    size_t avail = stream->available();
-    if (!avail) {
-      if (millis() - lastData > 15000) break;
-      delay(1);
-      continue;
-    }
-    size_t n = stream->readBytes(buf, min(avail, bufSize));
-    if (!n) continue;
-    lastData = millis();
-
-    size_t i = 0;
-    if (haveCarry) {
-      pcm[pcmCount++] = (int16_t)((uint16_t)carry | ((uint16_t)buf[0] << 8));
-      haveCarry = false;
-      i = 1;
-    }
-    if ((n - i) & 1) {
-      carry = buf[n - 1];
-      haveCarry = true;
-      n -= 1;
-    }
-    for (; i + 1 < n; i += 2) {
-      pcm[pcmCount++] = (int16_t)((uint16_t)buf[i] | ((uint16_t)buf[i + 1] << 8));
-      if (pcmCount == sizeof(pcm) / sizeof(pcm[0])) {
-        if (!sink(pcm, pcmCount)) {
-          aborted = true;
-          break;
-        }
-        totalSamples += pcmCount;
-        pcmCount = 0;
-      }
-    }
-  }
-  if (!aborted && pcmCount) {
-    sink(pcm, pcmCount);
-    totalSamples += pcmCount;
-  }
+  // Samples are handed to the sink as they decode, so a full clip never has to
+  // fit in RAM.
+  PcmStreamSink out(sink);
+  int written = http.writeToStream(&out);
+  bool ok = out.finish();
   http.end();
-  if (!totalSamples) {
+
+  if (written < 0) {
+    errOut = "stream error " + String(written);
+    return false;
+  }
+  if (!ok) {
     errOut = "empty pcm";
     return false;
   }

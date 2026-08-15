@@ -145,7 +145,11 @@ export function buildConfigBinary(fields) {
   o += 48;
   view.setUint8(o, fields.auto_listen ? 1 : 0);
   o += 1;
-  view.setUint8(o++, 0);
+  // speaker_volume: 1–100; 0 would mean "firmware default" but the flasher always writes a real value
+  let vol = Number(fields.speaker_volume);
+  if (!Number.isFinite(vol)) vol = 70;
+  vol = Math.max(1, Math.min(100, Math.round(vol)));
+  view.setUint8(o++, vol);
   view.setUint8(o++, 0);
   view.setUint8(o++, 0);
 
@@ -165,6 +169,7 @@ function readForm() {
     system_prompt: document.getElementById("system_prompt").value,
     wake_phrase: document.getElementById("wake_phrase").value.trim(),
     auto_listen: document.getElementById("auto_listen").value === "1",
+    speaker_volume: Number(document.getElementById("speaker_volume").value),
   };
 }
 
@@ -607,6 +612,17 @@ btnConnect.addEventListener("click", async () => {
 
 btnFlash.addEventListener("click", () => flashAll());
 btnConfigOnly.addEventListener("click", () => flashConfigOnly());
+const speakerVolumeEl = document.getElementById("speaker_volume");
+const speakerVolumeLabelEl = document.getElementById("speaker_volume_label");
+function syncSpeakerVolumeLabel() {
+  if (speakerVolumeEl && speakerVolumeLabelEl) {
+    speakerVolumeLabelEl.textContent = speakerVolumeEl.value;
+  }
+}
+if (speakerVolumeEl) {
+  speakerVolumeEl.addEventListener("input", syncSpeakerVolumeLabel);
+  syncSpeakerVolumeLabel();
+}
 btnValidateKey.addEventListener("click", async () => {
   try {
     await refreshOpenAiOptions();

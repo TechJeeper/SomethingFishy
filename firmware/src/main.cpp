@@ -52,7 +52,8 @@ static bool listenForWakePhrase() {
 static void onLipLevel(float level) { motorsLipSync(level); }
 
 static bool ttsSink(const int16_t *samples, size_t count) {
-  return audioPlayWrite(samples, count, onLipLevel);
+  const int vol = gCfg.speaker_volume ? (int)gCfg.speaker_volume : 70;
+  return audioPlayWrite(samples, count, onLipLevel, vol);
 }
 
 static void runConversationTurn() {
