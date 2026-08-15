@@ -424,12 +424,30 @@ async function loadFlashPlan() {
 }
 
 async function getEspTool() {
-  try {
-    return await import("https://esm.sh/esptool-js@0.5.5");
-  } catch (e) {
-    log("esm.sh import failed, trying unpkg…", "err");
-    return await import("https://unpkg.com/esptool-js@0.5.5/lib/index.js");
+  const sources = [
+    "https://unpkg.com/esptool-js@0.5.5/bundle.js?module",
+    "https://esm.sh/esptool-js@0.5.5",
+    "https://unpkg.com/esptool-js@0.5.5/lib/index.js",
+  ];
+  let lastErr = null;
+  for (let i = 0; i < sources.length; i++) {
+    const source = sources[i];
+    try {
+      const mod = await import(source);
+      if (mod?.ESPLoader && mod?.Transport) return mod;
+      if (mod?.default?.ESPLoader && mod?.default?.Transport) return mod.default;
+      throw new Error("Loaded module missing ESPLoader/Transport exports.");
+    } catch (err) {
+      lastErr = err;
+      const detail = err?.message ? ` (${err.message})` : "";
+      if (i < sources.length - 1) {
+        log(`esptool-js import failed from ${source}${detail}; trying fallback…`, "err");
+      } else {
+        log(`esptool-js import failed from ${source}${detail}.`, "err");
+      }
+    }
   }
+  throw lastErr || new Error("Failed to load esptool-js.");
 }
 
 async function connect() {
