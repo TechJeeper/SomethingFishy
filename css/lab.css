@@ -118,16 +118,40 @@
 
 .wire-list-body {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.15rem 0.35rem;
-  align-items: baseline;
+  flex-direction: column;
+  gap: 0.45rem;
   font-size: 0.8rem;
 }
 
 .wire-list-body strong {
-  flex-basis: 100%;
   font-size: 0.82rem;
   color: var(--foam);
+}
+
+.wire-list-route {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.wire-list-end {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.wire-list-end small {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  font-size: 0.62rem;
+}
+
+.wire-list-end span {
+  color: var(--ink);
+  font-size: 0.75rem;
 }
 
 .wire-list-body code {
@@ -165,9 +189,68 @@
   min-height: 3.2rem;
 }
 
+.wire-trace-card {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.wire-trace-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.68rem;
+  color: var(--ink-muted);
+}
+
+.wire-trace-route {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.wire-trace-end {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.wire-trace-end span {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.68rem;
+  color: var(--ink-muted);
+}
+
+.wire-trace-end b {
+  color: var(--foam);
+  font-size: 0.9rem;
+}
+
+.wire-trace-arrow {
+  color: var(--teal-bright);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.wire-trace-card p {
+  margin: 0;
+}
+
 .wire-endpoint-card code {
   color: var(--teal-bright);
   font-size: 0.85em;
+}
+
+@media (max-width: 720px) {
+  .wire-list-route,
+  .wire-trace-route {
+    grid-template-columns: 1fr;
+  }
+
+  .wire-list-arrow,
+  .wire-trace-arrow {
+    justify-self: start;
+  }
 }
 
 /* Lab */
