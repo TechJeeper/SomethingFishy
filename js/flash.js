@@ -262,7 +262,6 @@ function extractVoiceIds(payload) {
 }
 
 async function fetchAvailableVoices(apiKey) {
-  let lastError = null;
   for (const url of OPENAI_VOICE_ENDPOINTS) {
     try {
       const payload = await openAiFetchJson(url, apiKey);
@@ -271,11 +270,8 @@ async function fetchAvailableVoices(apiKey) {
     } catch (err) {
       if (err?.status === 401 || err?.status === 429) throw err;
       if (err?.status === 404 || err?.status === 405) continue;
-      lastError = err;
+      throw err;
     }
-  }
-  if (lastError) {
-    throw lastError;
   }
   return { voices: DEFAULT_VOICES, source: "fallback" };
 }
