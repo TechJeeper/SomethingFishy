@@ -30,6 +30,7 @@ const voicePreviewEl = document.getElementById("voice-preview");
 const DEFAULT_CHAT_MODELS = ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini", "gpt-4.1"];
 const DEFAULT_VOICES = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"];
 const OPENAI_VOICE_ENDPOINTS = ["https://api.openai.com/v1/audio/voices", "https://api.openai.com/v1/voices"];
+const VOICE_PREVIEW_MODEL = "tts-1";
 const VOICE_PREVIEW_TEXT = "Hey there — I am Billy Bass, and this is my voice preview.";
 
 let validatedApiKey = "";
@@ -272,7 +273,7 @@ async function fetchAvailableVoices(apiKey) {
     }
   }
   if (lastError) {
-    log(`Voice catalog refresh skipped: ${lastError.message || lastError}`);
+    throw lastError;
   }
   return { voices: DEFAULT_VOICES, source: "fallback" };
 }
@@ -335,7 +336,7 @@ async function previewSelectedVoice() {
       method: "POST",
       headers,
       body: JSON.stringify({
-        model: "tts-1",
+        model: VOICE_PREVIEW_MODEL,
         voice: ttsVoiceEl.value,
         input: VOICE_PREVIEW_TEXT,
         response_format: "mp3",
