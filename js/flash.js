@@ -18,6 +18,23 @@ const btnFlash = document.getElementById("btn-flash");
 const btnConfigOnly = document.getElementById("btn-config-only");
 const fwSourceLabel = document.getElementById("fw-source-label");
 const serialWarning = document.getElementById("serial-warning");
+const openAiKeyEl = document.getElementById("openai_key");
+const openAiModelEl = document.getElementById("openai_model");
+const ttsVoiceEl = document.getElementById("tts_voice");
+const btnValidateKey = document.getElementById("btn-validate-key");
+const apiKeyStatusEl = document.getElementById("api-key-status");
+const btnPreviewVoice = document.getElementById("btn-preview-voice");
+const voiceStatusEl = document.getElementById("voice-status");
+const voicePreviewEl = document.getElementById("voice-preview");
+
+const DEFAULT_CHAT_MODELS = ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini", "gpt-4.1"];
+const DEFAULT_VOICES = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"];
+const OPENAI_VOICE_ENDPOINTS = ["https://api.openai.com/v1/audio/voices", "https://api.openai.com/v1/voices"];
+const VOICE_PREVIEW_TEXT = "Hey there — I am Billy Bass, and this is my voice preview.";
+
+let validatedApiKey = "";
+let apiKeyValidationState = "idle";
+let currentVoicePreviewUrl = null;
 
 let port = null;
 let transport = null;
@@ -39,6 +56,39 @@ function setStatus(text, state) {
   statusPill.textContent = text;
   statusPill.classList.remove("connected", "error");
   if (state) statusPill.classList.add(state);
+}
+
+function setInlineStatus(el, text, state) {
+  el.textContent = text;
+  el.classList.remove("pending", "ok", "err");
+  if (state) el.classList.add(state);
+}
+
+function setApiKeyValidationState(state, text) {
+  apiKeyValidationState = state;
+  setInlineStatus(apiKeyStatusEl, text, state === "valid" ? "ok" : state === "invalid" ? "err" : state);
+}
+
+function setVoiceStatus(text, state) {
+  setInlineStatus(voiceStatusEl, text, state);
+}
+
+function resetVoicePreview() {
+  voicePreviewEl.pause();
+  voicePreviewEl.hidden = true;
+  voicePreviewEl.removeAttribute("src");
+  voicePreviewEl.load();
+  if (currentVoicePreviewUrl) {
+    URL.revokeObjectURL(currentVoicePreviewUrl);
+    currentVoicePreviewUrl = null;
+  }
+}
+
+function markApiKeyDirty() {
+  validatedApiKey = "";
+  setApiKeyValidationState("idle", "Validate the key to refresh models and voices.");
+  setVoiceStatus("Preview uses your API key and plays in-browser.", null);
+  resetVoicePreview();
 }
 
 function writeCString(view, offset, str, maxLen) {
@@ -116,6 +166,195 @@ function validate(fields) {
     return "OpenAI API key should start with sk-.";
   }
   return null;
+}
+
+function replaceSelectOptions(selectEl, values, preferredValue) {
+  const currentValue = preferredValue || selectEl.value;
+  const seen = new Set();
+  const nextValues = values.filter((value) => {
+    if (!value || seen.has(value)) return false;
+    seen.add(value);
+    return true;
+  });
+  selectEl.innerHTML = "";
+  for (const value of nextValues) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    if (value === currentValue) option.selected = true;
+    selectEl.appendChild(option);
+  }
+  if (!selectEl.value && nextValues[0]) {
+    selectEl.value = nextValues[0];
+  }
+}
+
+async function parseOpenAiError(res) {
+  const text = await res.text();
+  if (!text) return res.statusText;
+  try {
+    const body = JSON.parse(text);
+    return body?.error?.message || text;
+  } catch (_) {
+    return text;
+  }
+}
+
+async function openAiFetchJson(url, apiKey, init = {}) {
+  const headers = {
+    Authorization: "Bearer " + apiKey,
+    ...(init.headers || {}),
+  };
+  const res = await fetch(url, {
+    ...init,
+    headers,
+  });
+  if (!res.ok) {
+    const detail = await parseOpenAiError(res);
+    const err = new Error(detail || `${res.status} ${res.statusText}`);
+    err.status = res.status;
+    throw err;
+  }
+  return await res.json();
+}
+
+function isLikelyChatModel(id) {
+  if (!id) return false;
+  const lower = id.toLowerCase();
+  if (/audio|image|embedding|moderation|transcribe|whisper|tts|realtime/.test(lower)) return false;
+  return /^(gpt-|o\d|o1|o3|o4)/.test(lower);
+}
+
+function sortModels(models) {
+  const defaults = new Map(DEFAULT_CHAT_MODELS.map((value, index) => [value, index]));
+  return [...models].sort((a, b) => {
+    const ai = defaults.has(a) ? defaults.get(a) : Number.MAX_SAFE_INTEGER;
+    const bi = defaults.has(b) ? defaults.get(b) : Number.MAX_SAFE_INTEGER;
+    if (ai !== bi) return ai - bi;
+    return a.localeCompare(b);
+  });
+}
+
+async function fetchAvailableModels(apiKey) {
+  const payload = await openAiFetchJson("https://api.openai.com/v1/models", apiKey);
+  const models = sortModels(
+    (payload?.data || [])
+      .map((entry) => entry?.id)
+      .filter(isLikelyChatModel)
+  );
+  return models.length ? models : DEFAULT_CHAT_MODELS;
+}
+
+function extractVoiceIds(payload) {
+  const rawVoices = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.data)
+      ? payload.data
+      : Array.isArray(payload?.voices)
+        ? payload.voices
+        : [];
+  return rawVoices
+    .map((voice) => (typeof voice === "string" ? voice : voice?.id || voice?.name || voice?.value))
+    .filter(Boolean);
+}
+
+async function fetchAvailableVoices(apiKey) {
+  for (const url of OPENAI_VOICE_ENDPOINTS) {
+    try {
+      const payload = await openAiFetchJson(url, apiKey);
+      const voices = extractVoiceIds(payload);
+      if (voices.length) return { voices, source: "api" };
+    } catch (err) {
+      if (err?.status === 401) throw err;
+      if (err?.status === 404 || err?.status === 405) continue;
+      log(`Voice catalog refresh skipped: ${err.message || err}`);
+      break;
+    }
+  }
+  return { voices: DEFAULT_VOICES, source: "fallback" };
+}
+
+async function refreshOpenAiOptions() {
+  const apiKey = openAiKeyEl.value.trim();
+  if (!apiKey) {
+    setApiKeyValidationState("invalid", "OpenAI API key is required.");
+    throw new Error("OpenAI API key is required.");
+  }
+  if (!apiKey.startsWith("sk-")) {
+    setApiKeyValidationState("invalid", "OpenAI API key should start with sk-.");
+    throw new Error("OpenAI API key should start with sk-.");
+  }
+
+  btnValidateKey.disabled = true;
+  btnPreviewVoice.disabled = true;
+  setApiKeyValidationState("pending", "Validating API key and refreshing options…");
+
+  try {
+    const [models, voiceResult] = await Promise.all([fetchAvailableModels(apiKey), fetchAvailableVoices(apiKey)]);
+    replaceSelectOptions(openAiModelEl, models, openAiModelEl.value || DEFAULT_CHAT_MODELS[0]);
+    replaceSelectOptions(ttsVoiceEl, voiceResult.voices, ttsVoiceEl.value || DEFAULT_VOICES[0]);
+    validatedApiKey = apiKey;
+    setApiKeyValidationState(
+      "valid",
+      `Validated. Loaded ${models.length} models and ${voiceResult.voices.length} voices${voiceResult.source === "api" ? "." : " (using built-in voice list)."}` 
+    );
+    setVoiceStatus("Voice preview is ready.", "ok");
+    return { models, voices: voiceResult.voices };
+  } catch (err) {
+    validatedApiKey = "";
+    setApiKeyValidationState("invalid", `Validation failed: ${err.message || err}`);
+    setVoiceStatus("Preview unavailable until the API key validates.", "err");
+    throw err;
+  } finally {
+    btnValidateKey.disabled = false;
+    btnPreviewVoice.disabled = false;
+  }
+}
+
+async function ensureValidatedApiKey() {
+  const apiKey = openAiKeyEl.value.trim();
+  if (validatedApiKey === apiKey && apiKeyValidationState === "valid") return true;
+  await refreshOpenAiOptions();
+  return true;
+}
+
+async function previewSelectedVoice() {
+  btnPreviewVoice.disabled = true;
+  setVoiceStatus("Generating voice preview…", "pending");
+  try {
+    await ensureValidatedApiKey();
+    resetVoicePreview();
+    const apiKey = openAiKeyEl.value.trim();
+    const headers = {
+      Authorization: "Bearer " + apiKey,
+      "Content-Type": "application/json",
+    };
+    const res = await fetch("https://api.openai.com/v1/audio/speech", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model: "tts-1",
+        voice: ttsVoiceEl.value,
+        input: VOICE_PREVIEW_TEXT,
+        response_format: "mp3",
+      }),
+    });
+    if (!res.ok) {
+      throw new Error(await parseOpenAiError(res));
+    }
+    const audioBlob = await res.blob();
+    currentVoicePreviewUrl = URL.createObjectURL(audioBlob);
+    voicePreviewEl.src = currentVoicePreviewUrl;
+    voicePreviewEl.hidden = false;
+    await voicePreviewEl.play();
+    setVoiceStatus(`Playing ${ttsVoiceEl.value}.`, "ok");
+  } catch (err) {
+    resetVoicePreview();
+    setVoiceStatus(`Preview failed: ${err.message || err}`, "err");
+    log(`Voice preview failed: ${err.message || err}`, "err");
+  } finally {
+    btnPreviewVoice.disabled = false;
+  }
 }
 
 async function arrayBufferToBinaryString(buffer) {
@@ -254,6 +493,7 @@ async function flashAll() {
   btnFlash.disabled = true;
   btnConfigOnly.disabled = true;
   try {
+    await ensureValidatedApiKey();
     log("Loading firmware images…");
     const plan = await loadFlashPlan();
     const cfg = buildConfigBinary(fields);
@@ -296,6 +536,7 @@ async function flashConfigOnly() {
   btnFlash.disabled = true;
   btnConfigOnly.disabled = true;
   try {
+    await ensureValidatedApiKey();
     const cfg = buildConfigBinary(fields);
     const cfgStr = await arrayBufferToBinaryString(cfg);
     log("Writing config partition only…");
@@ -328,6 +569,20 @@ btnConnect.addEventListener("click", async () => {
 
 btnFlash.addEventListener("click", () => flashAll());
 btnConfigOnly.addEventListener("click", () => flashConfigOnly());
+btnValidateKey.addEventListener("click", async () => {
+  try {
+    await refreshOpenAiOptions();
+    log("OpenAI API key validated and options refreshed.", "ok");
+  } catch (e) {
+    log(String(e.message || e), "err");
+  }
+});
+btnPreviewVoice.addEventListener("click", () => previewSelectedVoice());
+openAiKeyEl.addEventListener("input", () => {
+  if (openAiKeyEl.value.trim() !== validatedApiKey || apiKeyValidationState !== "valid") {
+    markApiKeyDirty();
+  }
+});
 
 if (!("serial" in navigator)) {
   serialWarning.hidden = false;
@@ -336,3 +591,4 @@ if (!("serial" in navigator)) {
 } else {
   log("Chrome/Edge detected. Fill the form, connect USB, then flash.");
 }
+markApiKeyDirty();

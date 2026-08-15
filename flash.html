@@ -8,8 +8,8 @@
       name="description"
       content="Configure Wi-Fi and OpenAI, then flash SomethingFishy firmware to your ESP32-S3 from the browser."
     />
-    <link rel="stylesheet" href="css/styles.css?v=4" />
-    <link rel="icon" href="assets/icons/favicon.svg?v=4" type="image/svg+xml" />
+    <link rel="stylesheet" href="css/styles.css?v=5" />
+    <link rel="icon" href="assets/icons/favicon.svg?v=5" type="image/svg+xml" />
   </head>
   <body>
     <div class="site-bg" aria-hidden="true"></div>
@@ -70,6 +70,12 @@
               autocomplete="off"
             />
             <p class="field-hint">Stored only in browser memory and written to the ESP32 config partition.</p>
+            <div class="field-actions">
+              <button type="button" class="btn btn-secondary btn-small" id="btn-validate-key">
+                Validate key &amp; refresh options
+              </button>
+              <span class="field-status" id="api-key-status">Not validated yet.</span>
+            </div>
           </div>
 
           <div class="form-row">
@@ -92,6 +98,14 @@
                 <option value="nova">nova</option>
                 <option value="shimmer">shimmer</option>
               </select>
+              <p class="field-hint">Voice options refresh with your API key when the API exposes them.</p>
+              <div class="field-actions">
+                <button type="button" class="btn btn-secondary btn-small" id="btn-preview-voice">
+                  Preview selected voice
+                </button>
+                <span class="field-status" id="voice-status">Preview uses your API key and plays in-browser.</span>
+              </div>
+              <audio id="voice-preview" controls hidden preload="none"></audio>
             </div>
           </div>
 
@@ -178,7 +192,7 @@
       </div>
     </footer>
 
-    <script src="js/main.js?v=4"></script>
-    <script type="module" src="js/flash.js?v=4"></script>
+    <script src="js/main.js?v=5"></script>
+    <script type="module" src="js/flash.js?v=5"></script>
   </body>
 </html>
