@@ -234,7 +234,7 @@ async function openAiFetchJson(url, apiKey, init = {}) {
 function isLikelyChatModel(id) {
   if (!id) return false;
   const lower = id.toLowerCase();
-  if (/audio|image|embedding|moderation|transcribe|whisper|tts|realtime|search|computer.use|davinci|babbage|curie|ada/.test(lower)) return false;
+  if (/audio|image|embedding|moderation|transcribe|whisper|tts|realtime|search|computer-use|davinci|babbage|curie/.test(lower)) return false;
   return /^(gpt-|chatgpt-|o\d+)/.test(lower);
 }
 
