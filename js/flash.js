@@ -222,7 +222,7 @@ function isLikelyChatModel(id) {
   if (!id) return false;
   const lower = id.toLowerCase();
   if (/audio|image|embedding|moderation|transcribe|whisper|tts|realtime/.test(lower)) return false;
-  return /^(gpt-|o\d|o1|o3|o4)/.test(lower);
+  return /^(gpt-|o\d+)/.test(lower);
 }
 
 function sortModels(models) {
@@ -259,6 +259,7 @@ function extractVoiceIds(payload) {
 }
 
 async function fetchAvailableVoices(apiKey) {
+  let lastError = null;
   for (const url of OPENAI_VOICE_ENDPOINTS) {
     try {
       const payload = await openAiFetchJson(url, apiKey);
@@ -267,9 +268,11 @@ async function fetchAvailableVoices(apiKey) {
     } catch (err) {
       if (err?.status === 401) throw err;
       if (err?.status === 404 || err?.status === 405) continue;
-      log(`Voice catalog refresh skipped: ${err.message || err}`);
-      break;
+      lastError = err;
     }
+  }
+  if (lastError) {
+    log(`Voice catalog refresh skipped: ${lastError.message || lastError}`);
   }
   return { voices: DEFAULT_VOICES, source: "fallback" };
 }
@@ -324,9 +327,8 @@ async function previewSelectedVoice() {
   try {
     await ensureValidatedApiKey();
     resetVoicePreview();
-    const apiKey = openAiKeyEl.value.trim();
     const headers = {
-      Authorization: "Bearer " + apiKey,
+      Authorization: "Bearer " + validatedApiKey,
       "Content-Type": "application/json",
     };
     const res = await fetch("https://api.openai.com/v1/audio/speech", {
