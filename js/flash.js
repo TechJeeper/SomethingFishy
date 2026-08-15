@@ -33,7 +33,10 @@ const OPENAI_VOICE_ENDPOINTS = ["https://api.openai.com/v1/audio/voices", "https
 const VOICE_PREVIEW_MODEL = "tts-1";
 const VOICE_PREVIEW_TEXT = "Hey there — I am Billy Bass, and this is my voice preview.";
 const NETWORK_ERROR_MESSAGE =
-  "Network request failed — check your internet connection and that the page is served over HTTPS or localhost.";
+  "Network request to api.openai.com failed — check your internet connection" +
+  (typeof location === "undefined" || location.protocol === "https:" || location.hostname === "localhost"
+    ? "."
+    : " and that the page is served over HTTPS or localhost.");
 
 let validatedApiKey = "";
 let apiKeyValidationState = "idle";
@@ -276,7 +279,7 @@ async function fetchAvailableVoices(apiKey) {
       if (voices.length) return { voices, source: "api" };
     } catch (err) {
       if (err?.status === 401 || err?.status === 429) throw err;
-      if (err?.status === 404 || err?.status === 405) continue;
+      if (!err?.status || err?.status === 404 || err?.status === 405) continue;
       throw err;
     }
   }
