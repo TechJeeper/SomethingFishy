@@ -855,6 +855,40 @@ textarea {
   margin: 0.35rem 0 0;
 }
 
+.field-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.field-status {
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.field-status.pending {
+  color: var(--foam);
+}
+
+.field-status.ok {
+  color: var(--teal-bright);
+}
+
+.field-status.err {
+  color: var(--coral-hot);
+}
+
+.btn-small {
+  padding: 0.55rem 0.85rem;
+  font-size: 0.9rem;
+}
+
+#voice-preview {
+  margin-top: 0.75rem;
+}
+
 .flash-panel {
   background: rgba(12, 33, 56, 0.55);
   border: 1px solid var(--line);
