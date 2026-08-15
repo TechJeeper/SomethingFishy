@@ -61,6 +61,18 @@ export function mountWiringDiagram(host, opts = {}) {
     };
   }
 
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, (ch) => (
+      {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      }[ch]
+    ));
+  }
+
   function filteredNets() {
     return REFERENCE_NETS.filter((net) => {
       if (activeGroup && net.group !== activeGroup) return false;
@@ -288,37 +300,38 @@ export function mountWiringDiagram(host, opts = {}) {
     if (!opts.detailEl) return;
     if (!net) {
       opts.detailEl.innerHTML = activePin
-        ? `No connections found for <code>${endpointMeta(activePin).fullLabel}</code>.`
+        ? `No connections found for <code>${escapeHtml(endpointMeta(activePin).fullLabel)}</code>.`
         : activeGroup
-          ? `No connections found in the <strong>${activeGroup}</strong> filter.`
+          ? `No connections found in the <strong>${escapeHtml(activeGroup)}</strong> filter.`
           : "Pick a <strong>connection</strong> in the list, or click a <strong>pin</strong> on a module.";
       return;
     }
     const from = endpointMeta(net.endpoints[0]);
     const to = endpointMeta(net.endpoints[1]);
+    const activeMeta = activePin === net.endpoints[0] ? from : activePin === net.endpoints[1] ? to : null;
     const scope = activePin
-      ? `<span class="wire-trace-kicker">Tracing from <code>${endpointMeta(activePin).fullLabel}</code> · ${nets.length} match${nets.length === 1 ? "" : "es"}</span>`
+      ? `<span class="wire-trace-kicker">Tracing from <code>${escapeHtml(activeMeta?.fullLabel || endpointMeta(activePin).fullLabel)}</code> · ${nets.length} match${nets.length === 1 ? "" : "es"}</span>`
       : activeGroup
-        ? `<span class="wire-trace-kicker">${net.group.toUpperCase()} connection · ${nets.length} in this filter</span>`
+        ? `<span class="wire-trace-kicker">${escapeHtml(net.group.toUpperCase())} connection · ${nets.length} in this filter</span>`
         : `<span class="wire-trace-kicker">Trace this wire</span>`;
     opts.detailEl.innerHTML = `
       <div class="wire-trace-card">
         ${scope}
-        <strong>${net.name}</strong>
+        <strong>${escapeHtml(net.name)}</strong>
         <div class="wire-trace-route">
           <div class="wire-trace-end">
             <span>From</span>
-            <b>${from.moduleName}</b>
-            <code>${from.pinLabel}</code>
+            <b>${escapeHtml(from.moduleName)}</b>
+            <code>${escapeHtml(from.pinLabel)}</code>
           </div>
           <span class="wire-trace-arrow" aria-hidden="true">→</span>
           <div class="wire-trace-end">
             <span>To</span>
-            <b>${to.moduleName}</b>
-            <code>${to.pinLabel}</code>
+            <b>${escapeHtml(to.moduleName)}</b>
+            <code>${escapeHtml(to.pinLabel)}</code>
           </div>
         </div>
-        <p>Start at <code>${from.fullLabel}</code> and land the other end on <code>${to.fullLabel}</code>.</p>
+        <p>Start at <code>${escapeHtml(from.fullLabel)}</code> and land the other end on <code>${escapeHtml(to.fullLabel)}</code>.</p>
       </div>`;
   }
 
@@ -334,9 +347,11 @@ export function mountWiringDiagram(host, opts = {}) {
   function selectNet(netId) {
     const net = REFERENCE_NETS.find((n) => n.id === netId) || null;
     if (!net) return;
+    if (!filteredNets().some((item) => item.id === netId)) {
+      activePin = null;
+      activeGroup = null;
+    }
     activeNetId = netId;
-    if (activePin && !net.endpoints.includes(activePin)) activePin = null;
-    if (activeGroup && net.group !== activeGroup) activeGroup = null;
     const { nets, net: current } = refreshSelection();
     drawWires();
     updateDetail(nets, current);
@@ -377,18 +392,18 @@ export function mountWiringDiagram(host, opts = {}) {
         <button type="button" class="wire-list-btn">
           <span class="wire-list-swatch" style="background:${net.color}"></span>
           <span class="wire-list-body">
-            <strong>${net.name}</strong>
+            <strong>${escapeHtml(net.name)}</strong>
             <span class="wire-list-route">
               <span class="wire-list-end">
                 <small>From</small>
-                <span>${from.moduleName}</span>
-                <code>${from.pinLabel}</code>
+                <span>${escapeHtml(from.moduleName)}</span>
+                <code>${escapeHtml(from.pinLabel)}</code>
               </span>
               <span class="wire-list-arrow">→</span>
               <span class="wire-list-end">
                 <small>To</small>
-                <span>${to.moduleName}</span>
-                <code>${to.pinLabel}</code>
+                <span>${escapeHtml(to.moduleName)}</span>
+                <code>${escapeHtml(to.pinLabel)}</code>
               </span>
             </span>
           </span>
