@@ -210,12 +210,16 @@ void loop() {
     char c = Serial.read();
     if (c == 't' || c == 'T') serialTalk = true;
     if (c == 'h') {
-      Serial.println("t = talk turn, m = mouth test, x = stop motors");
+      Serial.println("t=talk  m=mouth  M=motor self-test  x=stop");
     }
     if (c == 'm') {
+      Serial.println("[motors] mouth pulse");
       mouthOpen();
       delay(300);
       mouthClose();
+    }
+    if (c == 'M') {
+      motorsSelfTest();
     }
     if (c == 'x') motorsStop();
   }

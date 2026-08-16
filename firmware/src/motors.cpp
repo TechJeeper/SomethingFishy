@@ -47,6 +47,22 @@ void tailFlop() {
   lastTailMs = millis();
 }
 
+void motorsSelfTest() {
+  Serial.println("[motors] self-test: need ENA+ENB jumpers ON, Vin powered, GND shared");
+  Serial.println("[motors] mouth (OUT1/OUT2)…");
+  mouthOpen();
+  delay(400);
+  mouthClose();
+  delay(200);
+  Serial.println("[motors] tail (OUT3/OUT4)…");
+  for (int i = 0; i < 2; i++) {
+    tailFlop();
+    delay(150);
+  }
+  motorsStop();
+  Serial.println("[motors] done — if nothing moved, check ENA/ENB jumpers first");
+}
+
 void motorsLipSync(float level01) {
   if (level01 < 0) level01 = 0;
   if (level01 > 1) level01 = 1;

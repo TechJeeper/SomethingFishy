@@ -165,6 +165,18 @@
           Channel A = mouth / head motor. Channel B = tail motor. If a motor runs the wrong way,
           swap its two output leads — do not invert in firmware first.
         </p>
+        <div class="callout warn">
+          <h4>ENA / ENB — required or motors stay dead</h4>
+          <p>
+            <strong class="text-ink">ENA</strong> enables channel A (mouth). <strong class="text-ink">ENB</strong> enables channel B (tail).
+            The ESP32 only drives <em>direction</em> pins IN1–IN4 — it does <em>not</em> wire ENA/ENB.
+          </p>
+          <p style="margin-top:0.6rem">
+            On most L298N modules, leave the little plastic <strong class="text-ink">jumpers on ENA and ENB</strong>
+            (they tie each enable to 5&nbsp;V = full on). If you removed those jumpers, put them back, or run a wire
+            from ENA→5&nbsp;V and ENB→5&nbsp;V on the driver. Without that, IN1–IN4 can wiggle forever and the motors still won’t move.
+          </p>
+        </div>
         <div class="diagram-panel">
           <img src="assets/diagrams/motor-wiring.svg?v=3" alt="L298N motor driver wiring diagram" width="780" height="400" />
         </div>
@@ -178,7 +190,8 @@
               <tr><td>IN2</td><td><span class="pin">GPIO17</span></td><td>Mouth / head direction B</td></tr>
               <tr><td>IN3</td><td><span class="pin">GPIO4</span></td><td>Tail direction A</td></tr>
               <tr><td>IN4</td><td><span class="pin">GPIO5</span></td><td>Tail direction B</td></tr>
-              <tr><td>ENA / ENB</td><td>5 V (jumpers on)</td><td>Enable both channels</td></tr>
+              <tr><td>ENA</td><td>Jumper ON (to 5&nbsp;V) — not an ESP32 pin</td><td>Enable mouth channel</td></tr>
+              <tr><td>ENB</td><td>Jumper ON (to 5&nbsp;V) — not an ESP32 pin</td><td>Enable tail channel</td></tr>
               <tr><td>OUT1 / OUT2</td><td>Mouth / head motor</td><td>Original Billy motor leads</td></tr>
               <tr><td>OUT3 / OUT4</td><td>Tail motor</td><td>Original Billy motor leads</td></tr>
               <tr><td>5V / GND</td><td>Logic supply + common GND</td><td>Share GND with ESP32</td></tr>
