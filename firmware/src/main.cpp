@@ -11,6 +11,7 @@
 
 static BillyConfig gCfg;
 static bool gReady = false;
+static uint32_t gNextWakeSttMs = 0;
 
 // Returns true if 'phrase' appears in 'text' (case-insensitive ASCII).
 static bool containsWakePhrase(const String &text, const char *phrase) {
@@ -24,19 +25,33 @@ static bool containsWakePhrase(const String &text, const char *phrase) {
 
 // Record a short clip and return true if the wake phrase was heard.
 static bool listenForWakePhrase() {
+  // Avoid hammering Whisper on continuous TV/ambient audio.
+  if (millis() < gNextWakeSttMs) {
+    delay(20);
+    return false;
+  }
+
   std::vector<int16_t> pcm;
   // Short window: up to 2 s, stop after 600 ms of silence
-  if (!audioRecord(pcm, 2000, 600)) return false;
+  if (!audioRecord(pcm, 2000, 600)) {
+    gNextWakeSttMs = millis() + 400;
+    return false;
+  }
 
   // Local energy gate: skip the API call if the recording is too quiet.
   // This avoids burning Whisper quota on silence/ambient noise.
   double energy = 0;
   for (int16_t s : pcm) energy += (double)s * (double)s;
   float rms = sqrtf((float)(energy / pcm.size())) / 32768.0f;
-  if (rms < 0.02f) return false;
+  if (rms < 0.035f) {
+    gNextWakeSttMs = millis() + 500;
+    return false;
+  }
 
   std::vector<uint8_t> wav;
   if (!audioMakeWav(pcm, wav)) return false;
+
+  gNextWakeSttMs = millis() + 1800;
 
   String transcript, err;
   if (!openaiTranscribe(gCfg, wav, transcript, err)) {
@@ -84,6 +99,10 @@ static void runConversationTurn() {
     return;
   }
   Serial.printf("[billy] you: %s\n", transcript.c_str());
+
+  // Give the TLS stack / heap a beat after the large Whisper upload.
+  delay(250);
+  yield();
 
   String reply;
   if (!openaiChat(gCfg, transcript, reply, err)) {
@@ -216,7 +235,11 @@ void loop() {
     if (listenForWakePhrase()) {
       Serial.println("[billy] wake phrase detected!");
       tailFlop();
+      // Pause so the command recording isn't filled with the same ambient stream.
+      Serial.println("[billy] say your request…");
+      delay(700);
       runConversationTurn();
+      gNextWakeSttMs = millis() + 2500;
     }
   } else {
     delay(10);

@@ -2,6 +2,7 @@
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
+#include <WiFi.h>
 
 static String authHeader(const BillyConfig &cfg) {
   return String("Bearer ") + cfg.openai_key;
@@ -15,18 +16,19 @@ static const char *voiceOrDefault(const BillyConfig &cfg) {
   return cfg.tts_voice[0] ? cfg.tts_voice : "alloy";
 }
 
+static bool httpRetryable(int code) {
+  return code < 0 || code == 408 || code == 429 || code == 500 || code == 502 ||
+         code == 503 || code == 504;
+}
+
+static void prepSecureClient(WiFiClientSecure &client) {
+  client.setInsecure();
+  client.setTimeout(25000);
+  client.setHandshakeTimeout(45);
+}
+
 bool openaiTranscribe(const BillyConfig &cfg, const std::vector<uint8_t> &wav,
                       String &transcriptOut, String &errOut) {
-  WiFiClientSecure client;
-  client.setInsecure();
-  HTTPClient http;
-  if (!http.begin(client, "https://api.openai.com/v1/audio/transcriptions")) {
-    errOut = "begin failed";
-    return false;
-  }
-  http.setTimeout(60000);
-  http.addHeader("Authorization", authHeader(cfg));
-
   String boundary = "----BillyBoundary7MA4YWxkTrZu0gW";
   String head = "--" + boundary + "\r\n"
                 "Content-Disposition: form-data; name=\"model\"\r\n\r\n"
@@ -43,19 +45,39 @@ bool openaiTranscribe(const BillyConfig &cfg, const std::vector<uint8_t> &wav,
   if (!body) body = (uint8_t *)malloc(total);
   if (!body) {
     errOut = "oom";
-    http.end();
     return false;
   }
   memcpy(body, head.c_str(), head.length());
   memcpy(body + head.length(), wav.data(), wav.size());
   memcpy(body + head.length() + wav.size(), tail.c_str(), tail.length());
 
-  http.addHeader("Content-Type", "multipart/form-data; boundary=" + boundary);
-  int code = http.POST(body, total);
+  int code = -1;
+  String resp;
+  for (int attempt = 0; attempt < 3; attempt++) {
+    if (attempt) {
+      Serial.printf("[openai] transcribe retry %d (last HTTP %d)\n", attempt + 1, code);
+      delay(400 * attempt);
+      yield();
+    }
+    WiFiClientSecure client;
+    prepSecureClient(client);
+    HTTPClient http;
+    if (!http.begin(client, "https://api.openai.com/v1/audio/transcriptions")) {
+      errOut = "begin failed";
+      code = -1;
+      continue;
+    }
+    http.setTimeout(60000);
+    http.addHeader("Authorization", authHeader(cfg));
+    http.addHeader("Content-Type", "multipart/form-data; boundary=" + boundary);
+    code = http.POST(body, total);
+    resp = http.getString();
+    http.end();
+    if (code == 200) break;
+    if (!httpRetryable(code)) break;
+  }
   free(body);
 
-  String resp = http.getString();
-  http.end();
   if (code != 200) {
     errOut = "HTTP " + String(code) + ": " + resp.substring(0, 180);
     return false;
@@ -72,17 +94,6 @@ bool openaiTranscribe(const BillyConfig &cfg, const std::vector<uint8_t> &wav,
 
 bool openaiChat(const BillyConfig &cfg, const String &userText, String &replyOut,
                 String &errOut) {
-  WiFiClientSecure client;
-  client.setInsecure();
-  HTTPClient http;
-  if (!http.begin(client, "https://api.openai.com/v1/chat/completions")) {
-    errOut = "begin failed";
-    return false;
-  }
-  http.setTimeout(60000);
-  http.addHeader("Authorization", authHeader(cfg));
-  http.addHeader("Content-Type", "application/json");
-
   JsonDocument doc;
   doc["model"] = modelOrDefault(cfg);
   JsonArray messages = doc["messages"].to<JsonArray>();
@@ -103,9 +114,34 @@ bool openaiChat(const BillyConfig &cfg, const String &userText, String &replyOut
 
   String payload;
   serializeJson(doc, payload);
-  int code = http.POST(payload);
-  String resp = http.getString();
-  http.end();
+
+  int code = -1;
+  String resp;
+  for (int attempt = 0; attempt < 3; attempt++) {
+    if (attempt) {
+      Serial.printf("[openai] chat retry %d (last HTTP %d, heap=%u)\n", attempt + 1, code,
+                    (unsigned)ESP.getFreeHeap());
+      delay(500 * attempt);
+      yield();
+    }
+    WiFiClientSecure client;
+    prepSecureClient(client);
+    HTTPClient http;
+    if (!http.begin(client, "https://api.openai.com/v1/chat/completions")) {
+      errOut = "begin failed";
+      code = -1;
+      continue;
+    }
+    http.setTimeout(60000);
+    http.addHeader("Authorization", authHeader(cfg));
+    http.addHeader("Content-Type", "application/json");
+    code = http.POST(payload);
+    resp = http.getString();
+    http.end();
+    if (code == 200) break;
+    if (!httpRetryable(code)) break;
+  }
+
   if (code != 200) {
     errOut = "HTTP " + String(code) + ": " + resp.substring(0, 180);
     return false;
@@ -189,17 +225,6 @@ class PcmStreamSink : public Stream {
 
 bool openaiTts(const BillyConfig &cfg, const String &text, PcmSink sink,
                String &errOut) {
-  WiFiClientSecure client;
-  client.setInsecure();
-  HTTPClient http;
-  if (!http.begin(client, "https://api.openai.com/v1/audio/speech")) {
-    errOut = "begin failed";
-    return false;
-  }
-  http.setTimeout(60000);
-  http.addHeader("Authorization", authHeader(cfg));
-  http.addHeader("Content-Type", "application/json");
-
   JsonDocument doc;
   doc["model"] = "tts-1";
   doc["input"] = text;
@@ -209,27 +234,50 @@ bool openaiTts(const BillyConfig &cfg, const String &text, PcmSink sink,
   String payload;
   serializeJson(doc, payload);
 
-  int code = http.POST(payload);
-  if (code != 200) {
-    errOut = "HTTP " + String(code) + ": " + http.getString().substring(0, 180);
+  int code = -1;
+  for (int attempt = 0; attempt < 3; attempt++) {
+    if (attempt) {
+      Serial.printf("[openai] tts retry %d (last HTTP %d)\n", attempt + 1, code);
+      delay(400 * attempt);
+      yield();
+    }
+
+    WiFiClientSecure client;
+    prepSecureClient(client);
+    HTTPClient http;
+    if (!http.begin(client, "https://api.openai.com/v1/audio/speech")) {
+      errOut = "begin failed";
+      code = -1;
+      continue;
+    }
+    http.setTimeout(60000);
+    http.addHeader("Authorization", authHeader(cfg));
+    http.addHeader("Content-Type", "application/json");
+
+    code = http.POST(payload);
+    if (code != 200) {
+      errOut = "HTTP " + String(code) + ": " + http.getString().substring(0, 180);
+      http.end();
+      if (!httpRetryable(code)) return false;
+      continue;
+    }
+
+    // Samples are handed to the sink as they decode, so a full clip never has to
+    // fit in RAM.
+    PcmStreamSink out(sink);
+    int written = http.writeToStream(&out);
+    bool ok = out.finish();
     http.end();
-    return false;
-  }
 
-  // Samples are handed to the sink as they decode, so a full clip never has to
-  // fit in RAM.
-  PcmStreamSink out(sink);
-  int written = http.writeToStream(&out);
-  bool ok = out.finish();
-  http.end();
-
-  if (written < 0) {
-    errOut = "stream error " + String(written);
-    return false;
+    if (written < 0) {
+      errOut = "stream error " + String(written);
+      continue;
+    }
+    if (!ok) {
+      errOut = "empty pcm";
+      return false;
+    }
+    return true;
   }
-  if (!ok) {
-    errOut = "empty pcm";
-    return false;
-  }
-  return true;
+  return false;
 }
