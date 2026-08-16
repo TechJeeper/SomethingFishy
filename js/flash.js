@@ -173,6 +173,71 @@ function readForm() {
   };
 }
 
+const FORM_STORAGE_KEY = "somethingfishy.flash.form.v1";
+const FORM_FIELD_IDS = [
+  "wifi_ssid",
+  "wifi_pass",
+  "openai_key",
+  "openai_model",
+  "tts_voice",
+  "system_prompt",
+  "wake_phrase",
+  "auto_listen",
+  "speaker_volume",
+];
+
+function saveFormToCache() {
+  try {
+    const data = {};
+    for (const id of FORM_FIELD_IDS) {
+      const el = document.getElementById(id);
+      if (el) data[id] = el.value;
+    }
+    localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    // Quota / private mode — ignore; flashing still works without cache.
+  }
+}
+
+function ensureSelectValue(selectEl, value) {
+  if (!selectEl || value == null || value === "") return;
+  const exists = Array.from(selectEl.options).some((o) => o.value === value);
+  if (!exists) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    selectEl.appendChild(option);
+  }
+  selectEl.value = value;
+}
+
+function loadFormFromCache() {
+  try {
+    const raw = localStorage.getItem(FORM_STORAGE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== "object") return false;
+    for (const id of FORM_FIELD_IDS) {
+      if (!(id in data)) continue;
+      const el = document.getElementById(id);
+      if (!el) continue;
+      if (el.tagName === "SELECT") ensureSelectValue(el, String(data[id]));
+      else el.value = String(data[id]);
+    }
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function clearFormCache() {
+  try {
+    localStorage.removeItem(FORM_STORAGE_KEY);
+  } catch (e) {
+    /* ignore */
+  }
+}
+
 function validate(fields) {
   if (!fields.wifi_ssid) return "Wi‑Fi SSID is required.";
   if (!fields.openai_key.startsWith("sk-")) {
@@ -621,8 +686,25 @@ function syncSpeakerVolumeLabel() {
 }
 if (speakerVolumeEl) {
   speakerVolumeEl.addEventListener("input", syncSpeakerVolumeLabel);
-  syncSpeakerVolumeLabel();
 }
+
+const restoredFromCache = loadFormFromCache();
+syncSpeakerVolumeLabel();
+if (restoredFromCache) {
+  log("Restored saved flash settings from this browser.", "ok");
+}
+
+let saveFormTimer = null;
+function scheduleFormSave() {
+  clearTimeout(saveFormTimer);
+  saveFormTimer = setTimeout(saveFormToCache, 200);
+}
+const flashForm = document.getElementById("flash-form") || document.querySelector("form");
+if (flashForm) {
+  flashForm.addEventListener("input", scheduleFormSave);
+  flashForm.addEventListener("change", scheduleFormSave);
+}
+
 btnValidateKey.addEventListener("click", async () => {
   try {
     await refreshOpenAiOptions();
